@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
+"""
 queue.py
-~~~~~~~~~~~~~
+~~~~~~~~
 
 Module to handle a pair of queues of EnergyPlus models and of EnergyPlus 
 results by distributing them to computing resources, either locally or 
 remotely.
 
-'''
+"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -26,11 +26,13 @@ PORTNUM = 50000
 AUTHKEY = 'password'
 IP = socket.gethostbyname(socket.gethostname())
 
+
 class JobQueueManager(SyncManager):
     pass
 
+
 def make_server_manager(port, authkey):
-    """Start a server on the given port, using the given authkey.
+    """Start a server manager on the given port, using the given authkey.
     """
     job_q = Queue()
     result_q = Queue()

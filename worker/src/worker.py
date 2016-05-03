@@ -3,7 +3,10 @@
 """
 worker.py
 ~~~~~~~~~
-EnergyPlus worker.
+
+EnergyPlus worker. This contains an EPlusJob object consisting of stubs to be
+filled out to preprocess, run, and postprocess a job fetched from the queue
+container, and return the results back to the queue container.
 
 """
 from __future__ import absolute_import
@@ -38,18 +41,20 @@ IDF.setiddname(IDD)
 class EPlusJob(object):
     
     def __init__(self, job):
+        """Template to run an EnergyPlus job.
+        """
         self.job = job
         self.preprocess()
         self.run()
         self.postprocess()
 
     def preprocess(self):
-        """Stub to use eppy to build the IDF.
+        """Stub to build the IDF (use eppy).
         """
         self.idf = self.job
 
     def run(self):
-        """Stub to use eppy to run the IDF.
+        """Stub to run the IDF.
         """
         self.raw_results = self.idf
 
@@ -63,6 +68,7 @@ class JobQueueManager(SyncManager):
     """Handle connections to the  jobs queue and results queue.
     """
     pass
+
 
 def make_client_manager(server_ip, port, authkey):
     """Create a client manager.

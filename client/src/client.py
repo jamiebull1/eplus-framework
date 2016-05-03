@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+client.py
+~~~~~~~~~
+
+"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -13,19 +18,24 @@ logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 AUTHKEY = 'password'
 
+def make_job_json(i):
+    logging.debug('%i' % i)
+    return {'job': i}
+
+
 class JobQueueManager(SyncManager):
     pass
 
+
 def make_creator_manager(server_ip, port, authkey):
+    """Start a server manager on the given port, using the given authkey.
+    """
     JobQueueManager.register('get_job_q')
     JobQueueManager.register('get_result_q')
     manager = JobQueueManager(address=(server_ip, port), authkey=authkey)
     manager.connect()
     return manager
 
-def make_job_json(i):
-    logging.debug('%i' % i)
-    return {'job': i}
 
 def main(server_ip):
     logging.info("Making creator manager")
@@ -44,6 +54,7 @@ def main(server_ip):
             logging.debug(result)
         except:
             pass
+
 
 if __name__ == "__main__":
     logging.info("Starting job creator")
