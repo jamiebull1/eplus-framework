@@ -1,7 +1,7 @@
 FROM elyase/conda:2.7
 
-ADD . /eplusclient
-WORKDIR /eplusclient
+ADD . /client
+WORKDIR /client
 
 # Force bash
 RUN opkg-install bash

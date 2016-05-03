@@ -1,7 +1,7 @@
 FROM elyase/conda:2.7
 
-ADD . /eplusqueue
-WORKDIR /eplusqueue
+ADD . /queue
+WORKDIR /queue
 
 # Force bash
 RUN opkg-install bash
