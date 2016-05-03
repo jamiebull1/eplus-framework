@@ -6,8 +6,6 @@ from __future__ import print_function
 
 import logging
 from multiprocessing.managers import SyncManager
-import os
-import sys
 import time
 
 
@@ -49,6 +47,5 @@ def main(server_ip):
 
 if __name__ == "__main__":
     logging.info("Starting job creator")
-#    server_ip = sys.argv[1]
     server_ip = "queue" 
     main(server_ip)

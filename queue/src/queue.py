@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-job_server.py
+queue.py
 ~~~~~~~~~~~~~
 
-Module to handle a FIFO queue of EnergyPlus models by distributing them to
-computing resources, either locally or remotely.
+Module to handle a pair of queues of EnergyPlus models and of EnergyPlus 
+results by distributing them to computing resources, either locally or 
+remotely.
 
 '''
 from __future__ import absolute_import
@@ -16,8 +17,8 @@ from Queue import Queue as _Queue
 from functools import partial
 import logging
 from multiprocessing.managers import SyncManager
-import os
 import socket
+
 
 logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
@@ -70,9 +71,6 @@ class Queue(_Queue):
         Only get an item if one is immediately available. Otherwise
         raise the Empty exception.
         """
-#        got = self.get(False)
-#        logging.info('Received: %s' % got)
-        
         return self.get(False)
 
 

@@ -10,31 +10,30 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import logging
 from multiprocessing.managers import SyncManager
 import os
 import sys
 import time
-import logging
 
-#from eppy.modeleditor import IDF
+from eppy.modeleditor import IDF
+
 
 logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
-#==============================================================================
-# VERSION = os.environ['ENERGYPLUS_VERSION'].replace('.', '-')
-# EPLUS_HOME = "/usr/local/EnergyPlus-{VERSION}".format(**locals())
-# EPLUS_EXE = os.path.join(EPLUS_HOME, 'energyplus')
-# EPLUS_IDD = os.path.join(EPLUS_HOME, 'Energy+.idd')
-# 
-# EPLUS_WEATHER = os.path.join(EPLUS_HOME, 'WeatherData')
-# THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-# EPW_TO_RUN = os.path.join(THIS_DIR, 'in_weather.epw')
-#==============================================================================
+VERSION = os.environ['ENERGYPLUS_VERSION'].replace('.', '-')
+EPLUS_HOME = "/usr/local/EnergyPlus-{VERSION}".format(**locals())
+EPLUS_EXE = os.path.join(EPLUS_HOME, 'energyplus')
+EPLUS_IDD = os.path.join(EPLUS_HOME, 'Energy+.idd')
+ 
+EPLUS_WEATHER = os.path.join(EPLUS_HOME, 'WeatherData')
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+EPW_TO_RUN = os.path.join(THIS_DIR, 'in_weather.epw')
 
 AUTHKEY = 'password'
 
-#IDD = os.path.join(EPLUS_HOME, 'Energy+.idd')
-#IDF.setiddname(IDD)
+IDD = os.path.join(EPLUS_HOME, 'Energy+.idd')
+IDF.setiddname(IDD)
 
 
 def run_job(job):
@@ -114,6 +113,5 @@ def main(server_ip):
 
     
 if __name__ == "__main__":
-#    server_ip = sys.argv[1]
     server_ip = "queue" 
     main(server_ip)
