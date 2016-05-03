@@ -1,0 +1,12 @@
+version: '2'
+services:
+  queue:
+    build: ./queue
+  client:
+    build: ./client
+    links: 
+      - queue
+  worker:
+    build: ./worker
+    links:
+      - queue
