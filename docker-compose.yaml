@@ -2,6 +2,8 @@ version: '2'
 services:
   queue:
     build: ./queue
+    ports:
+      - 50000:50000
   client:
     build: ./client
     links: 
