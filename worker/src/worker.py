@@ -3,7 +3,7 @@
 """
 worker.py
 ~~~~~~~~~
-EnergyPlus worker
+EnergyPlus worker.
 
 """
 from __future__ import absolute_import
@@ -15,7 +15,6 @@ from multiprocessing.managers import SyncManager
 import os
 import sys
 import time
-
 from eppy.modeleditor import IDF
 
 
@@ -36,29 +35,28 @@ IDD = os.path.join(EPLUS_HOME, 'Energy+.idd')
 IDF.setiddname(IDD)
 
 
-def run_job(job):
-    """
-    Stub to receive the job definition, build the IDF, run it, and return the
-    results.
-    """
-    idf = build_idf(job)
-    results = run_idf(idf)
-    return "run %s" % results
-
-
-def build_idf(job):
-    """Stub to use eppy to build the IDF.
-    """
-    idf = job['job']
+class EPlusJob(object):
     
-    return idf
+    def __init__(self, job):
+        self.job = job
+        self.preprocess()
+        self.run()
+        self.postprocess()
 
+    def preprocess(self):
+        """Stub to use eppy to build the IDF.
+        """
+        self.idf = self.job
 
-def run_idf(idf):
-    """Stub to use eppy to run the IDF.
-    """
-    results = idf
-    return results
+    def run(self):
+        """Stub to use eppy to run the IDF.
+        """
+        self.raw_results = self.idf
+
+    def postprocess(self):
+        """Stub to process and set the results.
+        """
+        self.result = self.raw_results
 
 
 class JobQueueManager(SyncManager):
@@ -72,7 +70,7 @@ def make_client_manager(server_ip, port, authkey):
     Parameters
     ----------
     server_ip : str
-        IP address of the server manageing the jobs and results queues.
+        IP address of the server managing the jobs and results queues.
     port : int
         Port number to connect to.
     authkey : str
@@ -97,17 +95,14 @@ def make_client_manager(server_ip, port, authkey):
 
 def main(server_ip):
     logging.debug("Making client manager")
-    manager = make_client_manager(server_ip, 50000, 'password')
+    manager = make_client_manager(server_ip, 50000, AUTHKEY)
     logging.debug("Getting queues")
     job_q = manager.get_job_q()
     result_q = manager.get_result_q()
-    logging.debug("Got queues")
     while True:
         try:
-            logging.debug("Trying")
-            job = job_q.get_nowait()
-            result = run_job(job)
-            result_q.put('Done: {}'.format(result))
+            job = EPlusJob(job_q.get_nowait())
+            result_q.put('Done: {}'.format(job.result))
         except:
             pass
 
