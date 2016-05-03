@@ -24,7 +24,7 @@ from eppy.modeleditor import IDF
 logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 VERSION = os.environ['ENERGYPLUS_VERSION'].replace('.', '-')
-EPLUS_HOME = "/usr/local/EnergyPlus-{VERSION}".format(**locals())
+EPLUS_HOME = "../usr/local/EnergyPlus-{VERSION}".format(**locals())
 EPLUS_EXE = os.path.join(EPLUS_HOME, 'energyplus')
 EPLUS_IDD = os.path.join(EPLUS_HOME, 'Energy+.idd')
  
