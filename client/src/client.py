@@ -9,6 +9,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import json
 import logging
 from multiprocessing.managers import SyncManager
 import os
@@ -25,7 +26,8 @@ logging.basicConfig(level=logging.DEBUG)
 AUTHKEY = 'password'
 
 def make_job_json(sample):
-    return {'job': {'params': sample}}
+    job = {'job': {'params': {key: value for key, value in sample}}}
+    return json.dumps(job)
 
 
 class JobQueueManager(SyncManager):

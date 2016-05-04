@@ -13,6 +13,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import json
 import logging
 from multiprocessing.managers import SyncManager
 import os
@@ -35,6 +36,7 @@ class EPlusJob(object):
     def __init__(self, job):
         """Template to run an EnergyPlus job.
         """
+        job = json.loads(job)
         self.job = job['job']['params']
         self.preprocess()
         logging.debug("Created IDF")      

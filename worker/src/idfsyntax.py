@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 def prepare_idf(idf, job):
     logging.debug("Editing IDF")
-    for key, value in job:
+    for key, value in job.items():
         logging.debug("{}: {}".format(key, value))
     # fabric U values
     # windows
