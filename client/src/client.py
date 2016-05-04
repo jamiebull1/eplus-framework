@@ -19,12 +19,13 @@ sys.path.append(os.getcwd())
 from src.sampler import samples
 
 
-logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 AUTHKEY = 'password'
 
 def make_job_json(sample):
-    return {'job': sample}
+    return {'job': {'params': sample}}
 
 
 class JobQueueManager(SyncManager):
@@ -47,9 +48,13 @@ def main(server_ip):
     logging.debug("Getting queues")
     job_q = manager.get_job_q()
     result_q = manager.get_result_q()
-    for s in samples():
-        job = make_job_json(s)
-        job_q.put(job)
+    jobs = samples()
+    while True:
+        try:
+            job = make_job_json(jobs.next())
+            job_q.put(job)
+        except:
+            pass
         try:
             result = result_q.get_nowait()
             logging.debug(result)

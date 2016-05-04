@@ -20,7 +20,8 @@ from multiprocessing.managers import SyncManager
 import socket
 
 
-logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 PORTNUM = 50000
 AUTHKEY = 'password'

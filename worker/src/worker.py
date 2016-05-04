@@ -20,12 +20,14 @@ import sys
 
 sys.path.append(os.getcwd())
 
+from src.idfsyntax import prepare_idf
 from src.runner import RunnableIDF
 
 
 AUTHKEY = 'password'
 
-logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 
 class EPlusJob(object):
@@ -33,7 +35,7 @@ class EPlusJob(object):
     def __init__(self, job):
         """Template to run an EnergyPlus job.
         """
-        self.job = job
+        self.job = job['job']['params']
         self.preprocess()
         logging.debug("Created IDF")      
         self.run()
@@ -49,8 +51,9 @@ class EPlusJob(object):
         idf = RunnableIDF(
             './data/template.idf',
             './data/GBR_London.Gatwick.037760_IWEC.epw')
-        self.idf = idf
         # make the required changes
+        idf = prepare_idf(idf, self.job)
+        self.idf = idf
 
     def run(self):
         """Stub to run the IDF.
