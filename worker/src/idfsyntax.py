@@ -1,7 +1,8 @@
 """
 idfsyntax.py
 ~~~~~~~~~~~~
-Module to convert an idf based on the job parameters passed in.
+Module to convert an idf based on the job parameters passed in. This can be
+changed to suit the job in hand.
 
 """
 import logging

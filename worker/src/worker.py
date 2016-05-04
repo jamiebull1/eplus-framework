@@ -38,12 +38,12 @@ class EPlusJob(object):
         """
         job = json.loads(job)
         self.job = job['job']['params']
+        logging.debug("Creating IDF")      
         self.preprocess()
-        logging.debug("Created IDF")      
+        logging.debug("Running IDF")      
         self.run()
-        logging.debug("Run IDF")      
+        logging.debug("Processing results")      
         self.postprocess()
-        logging.debug("Processed results")      
         
 
     def preprocess(self):
@@ -65,7 +65,7 @@ class EPlusJob(object):
     def postprocess(self):
         """Stub to process and set the results.
         """
-        self.result = self.raw_results
+        self.result = 'job'
 
 
 class JobQueueManager(SyncManager):
