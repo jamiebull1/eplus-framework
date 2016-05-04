@@ -14,9 +14,9 @@ from multiprocessing.managers import SyncManager
 import os
 import sys
 
-#sys.path.append(os.getcwd())
+sys.path.append(os.getcwd())
 
-#from src.sampler import samples
+from src.sampler import samples
 
 
 logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
@@ -47,10 +47,7 @@ def main(server_ip):
     logging.debug("Getting queues")
     job_q = manager.get_job_q()
     result_q = manager.get_result_q()
-    s = 0
-    while True:
-        s += 1
-#    for s in samples():
+    for s in samples():
         job = make_job_json(s)
         job_q.put(job)
         try:

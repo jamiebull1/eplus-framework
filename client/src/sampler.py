@@ -55,9 +55,11 @@ problem = {
 }
 
 def samples():
-    """Generate parameter values.
+    """Sample parameter values and return a generator of jobs.
     """
-    return saltelli.sample(problem, 1, calc_second_order=False)
+    runs = saltelli.sample(problem, 1, calc_second_order=False)
+    runs = runs.astype(float)
+    return (zip(problem['names'], run) for run in runs)
 
 def main():
     Y = np.empty([samples.shape[0]])
