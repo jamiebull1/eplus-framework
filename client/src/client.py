@@ -11,16 +11,20 @@ from __future__ import print_function
 
 import logging
 from multiprocessing.managers import SyncManager
-import time
+import os
+import sys
+
+#sys.path.append(os.getcwd())
+
+#from src.sampler import samples
 
 
 logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 AUTHKEY = 'password'
 
-def make_job_json(i):
-    logging.debug('%i' % i)
-    return {'job': i}
+def make_job_json(sample):
+    return {'job': sample}
 
 
 class JobQueueManager(SyncManager):
@@ -43,12 +47,12 @@ def main(server_ip):
     logging.debug("Getting queues")
     job_q = manager.get_job_q()
     result_q = manager.get_result_q()
-    i = 0
+    s = 0
     while True:
-        i += 1
-        job = make_job_json(i)
+        s += 1
+#    for s in samples():
+        job = make_job_json(s)
         job_q.put(job)
-        time.sleep(1)
         try:
             result = result_q.get_nowait()
             logging.debug(result)

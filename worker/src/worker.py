@@ -17,25 +17,15 @@ import logging
 from multiprocessing.managers import SyncManager
 import os
 import sys
-import time
-from eppy.modeleditor import IDF
 
+sys.path.append(os.getcwd())
 
-logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
+from src.runner import RunnableIDF
 
-VERSION = os.environ['ENERGYPLUS_VERSION'].replace('.', '-')
-EPLUS_HOME = "../usr/local/EnergyPlus-{VERSION}".format(**locals())
-EPLUS_EXE = os.path.join(EPLUS_HOME, 'energyplus')
-EPLUS_IDD = os.path.join(EPLUS_HOME, 'Energy+.idd')
- 
-EPLUS_WEATHER = os.path.join(EPLUS_HOME, 'WeatherData')
-THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-EPW_TO_RUN = os.path.join(THIS_DIR, 'in_weather.epw')
 
 AUTHKEY = 'password'
 
-IDD = os.path.join(EPLUS_HOME, 'Energy+.idd')
-IDF.setiddname(IDD)
+logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 
 class EPlusJob(object):
@@ -45,18 +35,27 @@ class EPlusJob(object):
         """
         self.job = job
         self.preprocess()
+        logging.debug("Created IDF")      
         self.run()
+        logging.debug("Run IDF")      
         self.postprocess()
+        logging.debug("Processed results")      
+        
 
     def preprocess(self):
         """Stub to build the IDF (use eppy).
         """
-        self.idf = self.job
+        # get the IDF into eppy
+        idf = RunnableIDF(
+            './data/template.idf',
+            './data/GBR_London.Gatwick.037760_IWEC.epw')
+        self.idf = idf
+        # make the required changes
 
     def run(self):
         """Stub to run the IDF.
         """
-        self.raw_results = self.idf
+        self.idf.run()
 
     def postprocess(self):
         """Stub to process and set the results.
@@ -99,6 +98,7 @@ def make_client_manager(server_ip, port, authkey):
         logging.error("Error: %s" % e)
     return manager
 
+
 def main(server_ip):
     logging.debug("Making client manager")
     manager = make_client_manager(server_ip, 50000, AUTHKEY)
@@ -109,6 +109,7 @@ def main(server_ip):
         try:
             job = EPlusJob(job_q.get_nowait())
             result_q.put('Done: {}'.format(job.result))
+            logging.debug('{}'.format(job.result))
         except:
             pass
 
