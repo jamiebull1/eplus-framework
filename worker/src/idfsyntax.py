@@ -13,4 +13,14 @@ def prepare_idf(idf, job):
     logging.debug("Editing IDF")
     for key, value in job:
         logging.debug("{}: {}".format(key, value))
+    # fabric U values
+    # windows
+    # thermal mass
+    # equipment
+    # lighting
+    # schedules
+    # setpoints
+    # infiltration and ventilation
+    # hvac efficiency
+    # weather file
     return idf
