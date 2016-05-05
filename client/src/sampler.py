@@ -58,18 +58,13 @@ def samples():
     """Sample parameter values and return a generator of jobs.
     """
     runs = saltelli.sample(problem, 1, calc_second_order=False)
-    as_floats = (zip(problem['names'], (float(n) for n in run)) 
+    as_floats = enumerate(zip(problem['names'], (float(n) for n in run)) 
                  for run in runs)
+    empty_results = np.nan * np.empty(len(runs))
+    return as_floats, empty_results
 
-    return as_floats
 
-def main():
-    Y = np.empty([samples.shape[0]])
-    
-    for i, X in enumerate(samples):
-        Y[i] = evaluate_model(X)
-        
-        
+def analyse(Y):
     Si = sobol.analyze(problem, Y, print_to_console=False, calc_second_order=False)
     
     print "Total:", Si['ST'].round(2)

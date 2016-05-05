@@ -17,10 +17,13 @@ import json
 import logging
 from multiprocessing.managers import SyncManager
 import os
+import shutil
 import sys
+import tempfile
 
 sys.path.append(os.getcwd())
 
+from src import results
 from src.idfsyntax import prepare_idf
 from src.runner import RunnableIDF
 
@@ -38,21 +41,27 @@ class EPlusJob(object):
         """
         job = json.loads(job)
         self.job = job['job']['params']
-        logging.debug("Creating IDF")      
-        self.preprocess()
+        self.id = job['job']['id']
+        logging.debug("Creating IDF")
+        try:
+            self.preprocess()
+        except Exception as e:
+            logging.debug(e)
         logging.debug("Running IDF")      
         self.run()
-        logging.debug("Processing results")      
-        self.postprocess()
-        
+        logging.debug("Processing results")
+        try:
+            self.postprocess()
+        except Exception as e:
+            logging.error(e)
+            raise
 
     def preprocess(self):
         """Stub to build the IDF (use eppy).
         """
         # get the IDF into eppy
         idf = RunnableIDF(
-            './data/template.idf',
-            './data/GBR_London.Gatwick.037760_IWEC.epw')
+            './data/template.idf', None)
         # make the required changes
         idf = prepare_idf(idf, self.job)
         self.idf = idf
@@ -60,12 +69,27 @@ class EPlusJob(object):
     def run(self):
         """Stub to run the IDF.
         """
-        self.idf.run()
-
+        self.rundir = tempfile.gettempdir()
+        try:
+            self.idf.run(output_directory=self.rundir, readvars=True)
+        except Exception as e:
+            logging.debug(e)
+            epluserr = os.path.join(self.rundir, 'eplusout.err')
+            with open(epluserr, 'r') as err:
+                for line in err:
+                    logging.debug(line)
+        logging.debug("rundir files: %s", str(os.listdir(self.rundir)))
+                
     def postprocess(self):
         """Stub to process and set the results.
         """
-        self.result = 'job'
+        eplussql = os.path.join(self.rundir, 'eplusout.sql')
+        elec = results.get_elec(eplussql)
+        non_elec = results.get_non_elec(eplussql)
+        self.result = {'id': self.id,
+                       'electrical': elec, 
+                       'non-electrical': non_elec}
+#        shutil.rmtree(self.rundir, ignore_errors=True)
 
 
 class JobQueueManager(SyncManager):
@@ -113,8 +137,8 @@ def main(server_ip):
     while True:
         try:
             job = EPlusJob(job_q.get_nowait())
-            result_q.put('Done: {}'.format(job.result))
-            logging.debug('{}'.format(job.result))
+            result_q.put(job.result)
+            logging.debug(str(job.result))
         except:
             pass
 
