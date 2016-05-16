@@ -129,7 +129,7 @@ def make_client_manager(server_ip, port, authkey):
 
 
 def main(server_ip):
-    logging.debug("Making client manager")
+    logging.debug("Making client manager test")
     manager = make_client_manager(server_ip, 50000, AUTHKEY)
     logging.debug("Getting queues")
     job_q = manager.get_job_q()
