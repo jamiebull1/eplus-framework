@@ -61,7 +61,6 @@ def main(server_ip):
     while np.isnan(results).any():
         try:
             job = make_job_json(*jobs.next())
-            logging.debug(job)
             job_q.put(job)
         except:
             pass
