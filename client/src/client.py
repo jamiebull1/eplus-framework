@@ -60,18 +60,21 @@ def main(server_ip):
     logging.debug(str(results))
     while np.isnan(results).any():
         try:
-            job = make_job_json(*jobs.next())
-            job_q.put(job)
+            logging.debug("Adding job to queue")
+            job_q.put("test put job")
+#            job = make_job_json(*jobs.next())
+#            logging.debug(job)
+#            job_q.put(job)
         except:
             pass
         try:
             result = result_q.get_nowait()
             logging.debug(str(result))
-            results[result['id']] = result['electrical']
+            results[result['id']] = result['electrical'] + result['non-electrical']
             logging.debug(str(results))
         except:
             pass
-    # TODO: kill the queue and worker/s
+    # TODO: kill the queue (and so let the worker/s die)
     analyse(results)
 
 

@@ -17,7 +17,7 @@ import json
 import logging
 from multiprocessing.managers import SyncManager
 import os
-import shutil
+import Queue
 import sys
 import tempfile
 
@@ -71,7 +71,8 @@ class EPlusJob(object):
         """
         self.rundir = tempfile.gettempdir()
         try:
-            self.idf.run(output_directory=self.rundir, readvars=True)
+            self.idf.run(output_directory=self.rundir, readvars=True, 
+                         expandobjects=True)
         except Exception as e:
             logging.debug(e)
             epluserr = os.path.join(self.rundir, 'eplusout.err')
@@ -89,7 +90,6 @@ class EPlusJob(object):
         self.result = {'id': self.id,
                        'electrical': elec, 
                        'non-electrical': non_elec}
-#        shutil.rmtree(self.rundir, ignore_errors=True)
 
 
 class JobQueueManager(SyncManager):
@@ -124,7 +124,7 @@ def make_client_manager(server_ip, port, authkey):
     try:
         manager.connect()
     except Exception as e:
-        logging.error("Error: %s" % e)
+        logging.error("%s: %s" % (sys.exc_info()[0], e))
     return manager
 
 
@@ -136,13 +136,20 @@ def main(server_ip):
     result_q = manager.get_result_q()
     while True:
         try:
-            job = EPlusJob(job_q.get_nowait())
-            result_q.put(job.result)
-            logging.debug(str(job.result))
-        except:
-            pass
-
+            result_q.put("test put result")
+            #==================================================================
+            # next_job = job_q.get_nowait()
+            # logging.debug(next_job)
+            # job = EPlusJob(next_job)
+            # result_q.put(job.result)
+            # logging.debug(str(job.result))
+            #==================================================================
+        except Queue.Empty:
+            logging.info("Job queue is empty")
+        except Exception:
+            logging.error(sys.exc_info())
+            
     
 if __name__ == "__main__":
-    server_ip = "queue" 
+    server_ip = "queue"
     main(server_ip)
