@@ -316,7 +316,7 @@ BUILDINGSURFACE:DETAILED,
 BUILDINGSURFACE:DETAILED, 
     osgb01_ROOF_0000,         !- Name
     ROOF,                     !- Surface Type
-    dummy_floor,              !- Construction Name
+    dummy_roof,              !- Construction Name
     osgb01,                   !- Zone Name
     outdoors,                 !- Outside Boundary Condition
     outdoors,                 !- Outside Boundary Condition Object
@@ -490,7 +490,7 @@ BUILDINGSURFACE:DETAILED,
 BUILDINGSURFACE:DETAILED, 
     osgb02_ROOF_0000,         !- Name
     ROOF,                     !- Surface Type
-    dummy_floor,              !- Construction Name
+    dummy_roof,              !- Construction Name
     osgb02,                   !- Zone Name
     outdoors,                 !- Outside Boundary Condition
     outdoors,                 !- Outside Boundary Condition Object
@@ -587,7 +587,7 @@ BUILDINGSURFACE:DETAILED,
     0,                       !- Fraction Replaceable
     GeneralLights;           !- End-Use Subcategory
 
-  ElectricalEquipment,
+  ElectricEquipment,
     ClassElec,       !- Name
     Class,                !- Zone or ZoneList Name
     AlwaysOn,                !- Schedule Name
@@ -600,7 +600,7 @@ BUILDINGSURFACE:DETAILED,
     0,                       !- Fraction Replaceable
     GeneralElecEquipment;           !- End-Use Subcategory
 
-  ElectricalEquipment,
+  ElectricEquipment,
     AdminElec,       !- Name
     Admin,                !- Zone or ZoneList Name
     AlwaysOn,                !- Schedule Name
