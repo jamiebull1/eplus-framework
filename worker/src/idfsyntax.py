@@ -129,8 +129,6 @@ def set_weather(idf, job):
         idf.epw = './data/cntr_Islington_TRY.epw'
     else:
         idf.epw = './data/2050_Islington_a1b_90_percentile_TRY.epw'
-    logging.debug(job['weather_file'])
-    logging.debug(idf.epw)
 
 def set_infiltration(idf, job):
     for zone in idf.idfobjects['ZONE']:
