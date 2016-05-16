@@ -136,19 +136,14 @@ def main(server_ip):
     result_q = manager.get_result_q()
     while True:
         try:
-            result_q.put("test put result")
-            #==================================================================
-            # next_job = job_q.get_nowait()
-            # logging.debug(next_job)
-            # job = EPlusJob(next_job)
-            # result_q.put(job.result)
-            # logging.debug(str(job.result))
-            #==================================================================
+            next_job = job_q.get_nowait()
+            logging.debug(next_job)
+            job = EPlusJob(next_job)
+            result_q.put(job.result)
+            logging.debug(str(job.result))
         except Queue.Empty:
-            logging.info("Job queue is empty")
-        except Exception:
-            logging.error(sys.exc_info())
-            
+            logging.info("Queue is empty")
+
     
 if __name__ == "__main__":
     server_ip = "queue"

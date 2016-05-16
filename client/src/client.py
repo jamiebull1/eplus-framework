@@ -60,11 +60,9 @@ def main(server_ip):
     logging.debug(str(results))
     while np.isnan(results).any():
         try:
-            logging.debug("Adding job to queue")
-            job_q.put("test put job")
-#            job = make_job_json(*jobs.next())
-#            logging.debug(job)
-#            job_q.put(job)
+            job = make_job_json(*jobs.next())
+            logging.debug(job)
+            job_q.put(job)
         except:
             pass
         try:

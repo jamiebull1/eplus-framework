@@ -73,10 +73,8 @@ class Queue(_Queue):
 
         Only get an item if one is immediately available. Otherwise
         raise the Empty exception.
-        
         """
-        next_task = self.get(False)
-        return next_task
+        return self.get(False)
 
 
 if __name__ == "__main__":
