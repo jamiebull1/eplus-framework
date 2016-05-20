@@ -1,11 +1,14 @@
 """
-sampler.py
-~~~~~~~~~~
+sensitivity.py
+~~~~~~~~~~~~~~
 
 Generate samples from an input file, run sensitivity analysis, process the
 results, and save the results to file.
 
 This module uses SALib to conduct the sensitivity analysis.
+
+To use, the variables should be listed in /client/data/parameters.txt and then
+worker.idfsyntax.py should be edited to use the parameters to build an IDF.
 
 """
 import logging
