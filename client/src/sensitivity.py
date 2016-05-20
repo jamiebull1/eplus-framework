@@ -8,12 +8,50 @@ Generate samples from an input file.
 import logging
 import os
 
-from SALib.analyze import sobol
 from SALib.analyze import morris as analyse_morris
-from SALib.sample import saltelli
+from SALib.analyze import sobol
 from SALib.sample import morris as sample_morris
+from SALib.sample import saltelli
 from SALib.util import read_param_file
+
 import numpy as np
+
+
+def sensitivity_analysis(sample_method, analysis_method, N):
+    """Conduct sensitivity analysis
+    """
+    names, runs, empty_results = samples(sample_method, N=N)
+    jobs = enumerate(zip(names, (float(n) for n in run)) for run in runs)
+
+    logging.debug("Initialising empty results")
+    elec_results = deepcopy(empty_results)
+    nonelec_results = deepcopy(empty_results)
+    time_results = deepcopy(empty_results)
+
+    step = 5 # percent complete
+    last_step = 0
+    t0 = time.time()
+    while np.isnan(elec_results).any():
+        try:
+            job = make_job_json(*jobs.next())
+            job_q.put(job)
+        except:
+            pass
+        try:
+            result = result_q.get_nowait()
+            elec_results[result['id']] = result['electrical'] / J_per_kWh
+            nonelec_results[result['id']] = result['non-electrical'] / J_per_kWh
+            time_results[result['id']] = result['time']
+            done = (float(result['id']) + 1) / len(elec_results) * 100
+            if done > last_step + step:
+                last_step += step
+                update_log(t0, done)
+        except:
+            pass
+    logging.info("Analysing results")
+    analyse(runs, elec_results, 'elec.txt', method=analysis_method)
+    analyse(runs, nonelec_results, 'nonelec.txt', method=analysis_method)
+    analyse(runs, time_results, 'time.txt', method=analysis_method)
 
 
 def evaluate_model(X):
