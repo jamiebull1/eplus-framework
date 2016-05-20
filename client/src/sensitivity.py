@@ -2,7 +2,10 @@
 sampler.py
 ~~~~~~~~~~
 
-Generate samples from an input file.
+Generate samples from an input file, run sensitivity analysis, process the
+results, and save the results to file.
+
+This module uses SALib to conduct the sensitivity analysis.
 
 """
 import logging
@@ -15,6 +18,9 @@ from SALib.sample import saltelli
 from SALib.util import read_param_file
 
 import numpy as np
+
+
+problem = read_param_file('/client/data/parameters.txt')
 
 
 def sensitivity_analysis(sample_method, analysis_method, N):
@@ -58,15 +64,14 @@ def evaluate_model(X):
     print zip(problem['names'], X)
     return X
 
-problem = read_param_file('/client/data/parameters.txt')
 
-def samples(method='morris', N=1):
+def samples(method='morris', N=1, *args, **kwargs):
     """Sample parameter values and return a generator of jobs.
     """
     if method == 'morris':
-        runs = sample_morris.sample(problem, N, 4, 2)
+        runs = sample_morris.sample(problem, N, *args, **kwargs)
     if method == 'saltelli':
-        runs = saltelli.sample(problem, N, calc_second_order=True)
+        runs = saltelli.sample(problem, N, *args, **kwargs)
     logging.info("Creating %i jobs" % len(runs))
     empty_results = np.nan * np.empty(len(runs))
 
