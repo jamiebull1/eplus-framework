@@ -25,7 +25,7 @@ from eppy.modeleditor import IDF
 import multiprocessing as mp
 
 
-logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
+#logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 VERSION = os.environ['ENERGYPLUS_VERSION'].replace('.', '-')
 

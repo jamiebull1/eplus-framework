@@ -1,43 +1,32 @@
-# name lower_bound upper_bound
+# name lower_bound upper_bound group
 'roof_u_value' 0.2 1.5
 'wall_u_value' 0.2 1.5
 'floor_u_value' 0.2 1.5
 'window_u_value' 1.5 4.0
 'window_shgc' 0.2 0.8
 'window2wall' 0.2 0.6
-# 'thermal_mass' #0 1
+# 'thermal_mass' 0 1
 'class_occupancy' 0.25 0.75
 'admin_occupancy' 0.075 0.15
 'class_equip_wpm2' 3 9
 'admin_equip_wpm2' 9 18
 'class_light_wpm2' 5 12
 'admin_light_wpm2' 8 15
-# 'schedules' #-0.1 0.1
+# 'schedules' -0.1 0.1
 'heating_setpoint' 17 24
 'cooling_setpoint' 99 100
 'ventilation' 5 16
 'infiltration' 0.2 1
 'boiler_efficiency' 0.7 0.9
-# 'cooling_efficiency' #1 3.5
-'weather_file' 0 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# 'cooling_efficiency' 1 3.5
+'weather_file' 0 1.0
+'interior_surface_convection' 0 2
+'exterior_surface_convection' 0 3
+'timesteps_per_hour' 0 2
+# 'shading_blocks_distance' 0 100
+# 'detailed_glazing' 0 1
+# 'power_density_averaging' 0 1
+'daylighting' 0 1
+# 'natural_ventilation' 0 1
+'detailed_hvac' 0 1
+# 'polygon_smoothing' 0.1 1

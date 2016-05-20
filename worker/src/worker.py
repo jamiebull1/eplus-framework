@@ -13,24 +13,27 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import Queue
 import json
 import logging
 from multiprocessing.managers import SyncManager
 import os
-import Queue
+import shutil
 import sys
 import tempfile
+import traceback
+
+from idfsyntax import prepare_idf
 
 sys.path.append(os.getcwd())
 
+from runner import RunnableIDF
 from src import results
-from src.idfsyntax import prepare_idf
-from src.runner import RunnableIDF
 
 
 AUTHKEY = 'password'
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 #logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 
@@ -46,8 +49,8 @@ class EPlusJob(object):
         try:
             self.preprocess()
         except Exception as e:
-            logging.debug(e)
-        logging.debug("Running IDF")      
+            traceback.print_exc()
+        logging.debug("Running IDF")
         self.run()
         logging.debug("Processing results")
         try:
@@ -72,24 +75,34 @@ class EPlusJob(object):
         self.rundir = tempfile.gettempdir()
         try:
             self.idf.run(output_directory=self.rundir, readvars=True, 
-                         expandobjects=True)
+                         expandobjects=True, verbose='q')
         except Exception as e:
-            logging.debug(e)
+            traceback.print_exc()
             epluserr = os.path.join(self.rundir, 'eplusout.err')
             with open(epluserr, 'r') as err:
                 for line in err:
-                    logging.debug(line)
-        logging.debug("rundir files: %s", str(os.listdir(self.rundir)))
+                    logging.error(line)
                 
     def postprocess(self):
         """Stub to process and set the results.
         """
         eplussql = os.path.join(self.rundir, 'eplusout.sql')
+        if self.job['daylighting'] > 0.5:
+            idf = os.path.join(self.rundir, 'eplusout.expidf')
+            err = os.path.join(self.rundir, 'eplusout.err')
+            sql = os.path.join(self.rundir, 'eplusout.sql')
+            shutil.copy(idf, '/tmp/results/daylighting.idf')
+            shutil.copy(err, '/tmp/results/daylighting.err')
+            shutil.copy(sql, '/tmp/results/daylighting.sql')
         elec = results.get_elec(eplussql)
         non_elec = results.get_non_elec(eplussql)
+        eplusend = os.path.join(self.rundir, 'eplusout.end')
+        execution_time = results.get_execution_time(eplusend)
         self.result = {'id': self.id,
                        'electrical': elec, 
-                       'non-electrical': non_elec}
+                       'non-electrical': non_elec,
+                       'time': execution_time,
+                       }
 
 
 class JobQueueManager(SyncManager):
@@ -137,12 +150,13 @@ def main(server_ip):
     while True:
         try:
             next_job = job_q.get_nowait()
-            logging.debug(next_job)
-            job = EPlusJob(next_job)
-            result_q.put(job.result)
-            logging.debug(str(job.result))
+            if next_job == 'kill worker':
+                exit()
         except Queue.Empty:
-            pass
+            continue
+        job = EPlusJob(next_job)
+        result_q.put(job.result)
+        logging.debug(str(job.result))
 
     
 if __name__ == "__main__":

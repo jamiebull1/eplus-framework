@@ -20,7 +20,7 @@ import pydoc
 
 from src.run_functions import run, IDF
 
-logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
+#logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 
 def wrapped_help_text(wrapped_func):

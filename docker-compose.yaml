@@ -4,11 +4,19 @@ services:
     build: ./queue
     ports:
       - 50000:50000
+    cpu_shares: 5
   client:
     build: ./client
     links: 
       - queue
+    volumes:
+      # host:container
+      - ./results:/tmp/results
+    cpu_shares: 100
   worker:
     build: ./worker
     links:
       - queue
+    volumes:
+      # host:container
+      - ./results:/tmp/results

@@ -20,7 +20,7 @@ from multiprocessing.managers import SyncManager
 import socket
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 #logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 PORTNUM = 50000
@@ -74,7 +74,8 @@ class Queue(_Queue):
         Only get an item if one is immediately available. Otherwise
         raise the Empty exception.
         """
-        return self.get(False)
+        got = self.get(False)  # in case we need to do something with it
+        return got
 
 
 if __name__ == "__main__":

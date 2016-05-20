@@ -562,7 +562,7 @@ BUILDINGSURFACE:DETAILED,
   Lights,
     ClassLights,       !- Name
     Class,                !- Zone or ZoneList Name
-    AlwaysOn,                !- Schedule Name
+    Class Occupancy,                !- Schedule Name
     Watts/Area,            !- Design Level Calculation Method
     ,                        !- Lighting Level {W}
     ,                        !- Watts per Zone Floor Area {W/m2}
@@ -570,13 +570,13 @@ BUILDINGSURFACE:DETAILED,
     0,                       !- Return Air Fraction
     0.59,                    !- Fraction Radiant
     0.2,                     !- Fraction Visible
-    0,                       !- Fraction Replaceable
+    1.0,                       !- Fraction Replaceable
     GeneralLights;           !- End-Use Subcategory
 
   Lights,
     AdminLights,       !- Name
     Admin,                !- Zone or ZoneList Name
-    AlwaysOn,                !- Schedule Name
+    Admin Occupancy,                !- Schedule Name
     Watts/Area,            !- Design Level Calculation Method
     ,                        !- Lighting Level {W}
     ,                        !- Watts per Zone Floor Area {W/m2}
@@ -584,13 +584,13 @@ BUILDINGSURFACE:DETAILED,
     0,                       !- Return Air Fraction
     0.59,                    !- Fraction Radiant
     0.2,                     !- Fraction Visible
-    0,                       !- Fraction Replaceable
+    1.0,                       !- Fraction Replaceable
     GeneralLights;           !- End-Use Subcategory
 
   ElectricEquipment,
     ClassElec,       !- Name
     Class,                !- Zone or ZoneList Name
-    AlwaysOn,                !- Schedule Name
+    Class Occupancy,                !- Schedule Name
     Watts/Area,            !- Design Level Calculation Method
     ,                        !- Lighting Level {W}
     ,                        !- Watts per Zone Floor Area {W/m2}
@@ -603,7 +603,7 @@ BUILDINGSURFACE:DETAILED,
   ElectricEquipment,
     AdminElec,       !- Name
     Admin,                !- Zone or ZoneList Name
-    AlwaysOn,                !- Schedule Name
+    Admin Occupancy,                !- Schedule Name
     Watts/Area,            !- Design Level Calculation Method
     ,                        !- Lighting Level {W}
     ,                        !- Watts per Zone Floor Area {W/m2}
@@ -723,8 +723,10 @@ PEOPLE,
 
   Output:VariableDictionary,regular;
   
-  Output:Meter,Electricity:Facility,timestep;    
-  Output:Meter,Gas:Facility,timestep;    
+  Output:Meter,Electricity:Facility,annual;
+  Output:Meter,Gas:Facility,annual;    
+  Output:Meter,DistrictHeating:Facility,annual;    
+  Output:Meter,DistrictCooling:Facility,annual;    
 
   Output:Diagnostics,
     DisplayExtraWarnings;    !- Key 1
