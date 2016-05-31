@@ -10,5 +10,7 @@ python:
 
 before install:
 - docker-compose build
+
+script:
 - docker-compose scale queue=1 client=1 worker=1
 - docker-compose logs -f
