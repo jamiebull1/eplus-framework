@@ -1,0 +1,27 @@
+language: python
+
+sudo: required
+
+services:
+  - docker
+
+python:
+  - "2.7"
+  - "3.5"
+
+before install:
+- docker-compose build
+- docker-compose scale queue=1 client=1 worker=1
+- docker-compose logs -f
+
+install:
+  # Update the Python 3 code, and change to the p3 dir if required
+  - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then cd eppy; sh 2to3sh.sh; cd ../p3; fi
+  - pip install -r requirements.txt
+  - pip install pytest-cov
+  - pip install codecov
+
+script: coverage run --source=eppy -m py.test -v
+
+after_success:
+    - codecov

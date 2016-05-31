@@ -37,7 +37,7 @@ def prepare_idf(idf, job):
     
     # windows
     set_windows(idf, job)
-    # occupancy    
+    # occupancy
     set_occupancy(idf, job)
     # schedules
     
