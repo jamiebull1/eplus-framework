@@ -5,4 +5,4 @@ eplus-framework
 
 See the individual packages for their own README files.
 
-Trigger.
+Trigger
