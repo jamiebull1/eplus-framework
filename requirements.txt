@@ -1,1 +1,1 @@
-pipeit>=0
+munch>=2.0.2
