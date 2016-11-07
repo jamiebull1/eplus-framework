@@ -8,6 +8,7 @@ client.py
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 from copy import deepcopy
 import json
@@ -19,7 +20,7 @@ import time
 
 import numpy as np
 
-from sampler import sensitivity_analysis
+from sensitivity import sensitivity_analysis
 
 
 logging.basicConfig(level=logging.INFO)
