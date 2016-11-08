@@ -38,8 +38,8 @@ def make_server_manager(port, authkey):
     """
     job_q = Queue()
     result_q = Queue()
-    JobQueueManager.register('get_job_q', callable=partial(get_q, job_q))
-    JobQueueManager.register('get_result_q', callable=partial(get_q, result_q))
+    JobQueueManager.register(b'get_job_q', callable=partial(get_q, job_q))
+    JobQueueManager.register(b'get_result_q', callable=partial(get_q, result_q))
     manager = JobQueueManager(address=('', port), authkey=authkey)
     logging.info("Running server on %s:%s" % (IP, PORTNUM))
     return manager

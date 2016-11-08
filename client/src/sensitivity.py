@@ -16,15 +16,22 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from copy import deepcopy
 import logging
 import os
+import time
 
 from SALib.analyze import morris as analyse_morris
 from SALib.analyze import sobol
+from SALib.analyze.morris import compute_grouped_metric
+from SALib.analyze.morris import compute_grouped_sigma
 from SALib.sample import morris as sample_morris
 from SALib.sample import saltelli
 from SALib.util import read_param_file
 
+from client.src.client import J_per_kWh
+from client.src.client import make_job_json
+from client.src.client import update_log
 import numpy as np
 
 
@@ -69,7 +76,7 @@ def sensitivity_analysis(sample_method, analysis_method, N):
 
 
 def evaluate_model(X):
-    print zip(problem['names'], X)
+    print(zip(problem['names'], X))
     return X
 
 

@@ -130,9 +130,9 @@ def make_client_manager(server_ip, port, authkey):
 
     """
     logging.debug("Registering job queue")
-    JobQueueManager.register('get_job_q')
+    JobQueueManager.register(b'get_job_q')
     logging.debug("Registering results queue")
-    JobQueueManager.register('get_result_q')
+    JobQueueManager.register(b'get_result_q')
     manager = JobQueueManager(address=(server_ip, port), authkey=authkey)
     logging.debug("Connecting to manager")
     try:

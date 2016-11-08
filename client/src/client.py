@@ -41,8 +41,8 @@ class JobQueueManager(SyncManager):
 def make_creator_manager(server_ip, port, authkey):
     """Start a server manager on the given port, using the given authkey.
     """
-    JobQueueManager.register('get_job_q')
-    JobQueueManager.register('get_result_q')
+    JobQueueManager.register(b'get_job_q')
+    JobQueueManager.register(b'get_result_q')
     manager = JobQueueManager(address=(server_ip, port), authkey=authkey)
     manager.connect()
     return manager
