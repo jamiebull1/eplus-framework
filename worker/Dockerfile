@@ -1,4 +1,4 @@
-FROM jamiebull1/eppy:eplus8.4_eppy_DEV
+FROM jamiebull1/eppy:eplus8.5_eppy_DEV
 
 ADD . /worker
 WORKDIR /worker

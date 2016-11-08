@@ -4,5 +4,3 @@ eplus-framework
  for Python 2.7 on Linux via Travis
 
 See the individual packages for their own README files.
-
-Trigger

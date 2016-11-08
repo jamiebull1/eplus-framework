@@ -1,6 +1,6 @@
-FROM nrel/energyplus:8.4
+FROM nrel/energyplus:latest
 
-ENV ENERGYPLUS_VERSION=8.4.0
+ENV ENERGYPLUS_VERSION=8.5.0
 
 RUN apt-get update && apt-get install -y \
   python-dev \
