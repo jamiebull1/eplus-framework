@@ -29,15 +29,10 @@ from SALib.sample import morris as sample_morris
 from SALib.sample import saltelli
 from SALib.util import read_param_file
 
-#from client.src.client import J_per_kWh
-#from client.src.client import update_log
 import numpy as np
 
 J_per_kWh = 3600000
 
-#from client.src.client import J_per_kWh
-#from client.src.client import make_job_json
-#from client.src.client import update_log
 problem = read_param_file('/client/data/parameters.txt')
 
 
@@ -144,35 +139,6 @@ def write_results(filename, Si, problem, method, groups, calc_second_order):
                                         Si['mu_star_conf'][j],
                                         Si['sigma'][j])
                           )
-         #======================================================================
-         #    elif groups is not None:
-         #        # if there are groups, then the elementary effects returned need to be
-         #        # computed over the groups of variables, rather than the individual variables
-         #        Si_grouped = dict((k, [None] * num_vars)
-         #                for k in ['mu_star', 'mu_star_conf'])
-         #        Si_grouped['mu_star'] = compute_grouped_metric(Si['mu_star'], groups)
-         #        Si_grouped['mu_star_conf'] = compute_grouped_metric(Si['mu_star_conf'],
-         #                                                             groups)
-         #        Si_grouped['names'] = unique_group_names
-         #        Si_grouped['sigma'] = compute_grouped_sigma(Si['sigma'], groups)
-         #        Si_grouped['mu'] = compute_grouped_sigma(Si['mu'], groups)
-         # 
-         #        f.write("{0:<30} {1:>10} {2:>10} {3:>15} {4:>10}\n".format(
-         #                            "Parameter",
-         #                            "Mu_Star",
-         #                            "Mu",
-         #                            "Mu_Star_Conf",
-         #                            "Sigma")
-         #              )
-         #        for j in list(range(number_of_groups)):
-         #            f.write("{0:30} {1:10.3f} {2:10.3f} {3:15.3f} {4:10.3f}\n".format(
-         #                                Si_grouped['names'][j],
-         #                                Si_grouped['mu_star'][j],
-         #                                Si_grouped['mu'][j],
-         #                                Si_grouped['mu_star_conf'][j],
-         #                                Si_grouped['sigma'][j])
-         #                  )
-         #======================================================================
     elif method == 'sobol':
         title = 'Parameter'
         names = problem['names']
