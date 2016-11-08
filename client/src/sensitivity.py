@@ -111,7 +111,7 @@ def samples(method='morris', N=1, *args, **kwargs):
     return problem['names'], runs, empty_results
 
 
-def analyse(X, Y, filename=None, method='morris',# groups=None, 
+def analyse(X, Y, filename=None, method='morris', groups=None, 
             calc_second_order=True):
     if method == 'morris':
         Si = analyse_morris.analyze(problem, X, Y)
@@ -119,7 +119,7 @@ def analyse(X, Y, filename=None, method='morris',# groups=None,
         Si = sobol.analyze(problem, Y, calc_second_order=calc_second_order)
     # write results
     if filename:
-        write_results(filename, Si, problem, method=method,# groups=groups, 
+        write_results(filename, Si, problem, method=method, groups=groups, 
                       calc_second_order=calc_second_order)
 
 
