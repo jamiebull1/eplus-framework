@@ -17,28 +17,31 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from copy import deepcopy
+import json
 import logging
-import os
 import time
 
 from SALib.analyze import morris as analyse_morris
 from SALib.analyze import sobol
-from SALib.analyze.morris import compute_grouped_metric
-from SALib.analyze.morris import compute_grouped_sigma
+#from SALib.analyze.morris import compute_grouped_metric
+#from SALib.analyze.morris import compute_grouped_sigma
 from SALib.sample import morris as sample_morris
 from SALib.sample import saltelli
 from SALib.util import read_param_file
 
-from client.src.client import J_per_kWh
-from client.src.client import make_job_json
-from client.src.client import update_log
+#from client.src.client import J_per_kWh
+#from client.src.client import update_log
 import numpy as np
 
+J_per_kWh = 3600000
 
+#from client.src.client import J_per_kWh
+#from client.src.client import make_job_json
+#from client.src.client import update_log
 problem = read_param_file('/client/data/parameters.txt')
 
 
-def sensitivity_analysis(sample_method, analysis_method, N):
+def sensitivity_analysis(job_q, result_q, sample_method, analysis_method, N):
     """Conduct sensitivity analysis
     """
     names, runs, empty_results = samples(sample_method, N=N)
@@ -75,6 +78,21 @@ def sensitivity_analysis(sample_method, analysis_method, N):
     analyse(runs, time_results, 'time.txt', method=analysis_method)
 
 
+def update_log(t0, done):
+    logging.info("%.2f%% done" % done)
+    t1 = time.time()
+    secs = t1 - t0
+    remaining = 100 - done
+    secs_per_percent = secs / done
+    secs_remaining = secs_per_percent * remaining
+    logging.info("Approx %.1f mins remaining" % (secs_remaining / 60))
+
+
+def make_job_json(i, sample):
+    job = {'job': {'id': i, 'params': {key: value for key, value in sample}}}
+    return json.dumps(job)
+
+
 def evaluate_model(X):
     print(zip(problem['names'], X))
     return X
@@ -93,7 +111,7 @@ def samples(method='morris', N=1, *args, **kwargs):
     return problem['names'], runs, empty_results
 
 
-def analyse(X, Y, filename=None, method='morris', groups=None, 
+def analyse(X, Y, filename=None, method='morris',# groups=None, 
             calc_second_order=True):
     if method == 'morris':
         Si = analyse_morris.analyze(problem, X, Y)
@@ -101,7 +119,7 @@ def analyse(X, Y, filename=None, method='morris', groups=None,
         Si = sobol.analyze(problem, Y, calc_second_order=calc_second_order)
     # write results
     if filename:
-        write_results(filename, Si, problem, method=method, groups=groups, 
+        write_results(filename, Si, problem, method=method,# groups=groups, 
                       calc_second_order=calc_second_order)
 
 
@@ -126,33 +144,35 @@ def write_results(filename, Si, problem, method, groups, calc_second_order):
                                         Si['mu_star_conf'][j],
                                         Si['sigma'][j])
                           )
-            elif groups is not None:
-                # if there are groups, then the elementary effects returned need to be
-                # computed over the groups of variables, rather than the individual variables
-                Si_grouped = dict((k, [None] * num_vars)
-                        for k in ['mu_star', 'mu_star_conf'])
-                Si_grouped['mu_star'] = compute_grouped_metric(Si['mu_star'], groups)
-                Si_grouped['mu_star_conf'] = compute_grouped_metric(Si['mu_star_conf'],
-                                                                     groups)
-                Si_grouped['names'] = unique_group_names
-                Si_grouped['sigma'] = compute_grouped_sigma(Si['sigma'], groups)
-                Si_grouped['mu'] = compute_grouped_sigma(Si['mu'], groups)
-         
-                f.write("{0:<30} {1:>10} {2:>10} {3:>15} {4:>10}\n".format(
-                                    "Parameter",
-                                    "Mu_Star",
-                                    "Mu",
-                                    "Mu_Star_Conf",
-                                    "Sigma")
-                      )
-                for j in list(range(number_of_groups)):
-                    f.write("{0:30} {1:10.3f} {2:10.3f} {3:15.3f} {4:10.3f}\n".format(
-                                        Si_grouped['names'][j],
-                                        Si_grouped['mu_star'][j],
-                                        Si_grouped['mu'][j],
-                                        Si_grouped['mu_star_conf'][j],
-                                        Si_grouped['sigma'][j])
-                          )
+         #======================================================================
+         #    elif groups is not None:
+         #        # if there are groups, then the elementary effects returned need to be
+         #        # computed over the groups of variables, rather than the individual variables
+         #        Si_grouped = dict((k, [None] * num_vars)
+         #                for k in ['mu_star', 'mu_star_conf'])
+         #        Si_grouped['mu_star'] = compute_grouped_metric(Si['mu_star'], groups)
+         #        Si_grouped['mu_star_conf'] = compute_grouped_metric(Si['mu_star_conf'],
+         #                                                             groups)
+         #        Si_grouped['names'] = unique_group_names
+         #        Si_grouped['sigma'] = compute_grouped_sigma(Si['sigma'], groups)
+         #        Si_grouped['mu'] = compute_grouped_sigma(Si['mu'], groups)
+         # 
+         #        f.write("{0:<30} {1:>10} {2:>10} {3:>15} {4:>10}\n".format(
+         #                            "Parameter",
+         #                            "Mu_Star",
+         #                            "Mu",
+         #                            "Mu_Star_Conf",
+         #                            "Sigma")
+         #              )
+         #        for j in list(range(number_of_groups)):
+         #            f.write("{0:30} {1:10.3f} {2:10.3f} {3:15.3f} {4:10.3f}\n".format(
+         #                                Si_grouped['names'][j],
+         #                                Si_grouped['mu_star'][j],
+         #                                Si_grouped['mu'][j],
+         #                                Si_grouped['mu_star_conf'][j],
+         #                                Si_grouped['sigma'][j])
+         #                  )
+         #======================================================================
     elif method == 'sobol':
         title = 'Parameter'
         names = problem['names']
