@@ -23,6 +23,8 @@ def prepare_idf(idf, job):
     logging.debug("Editing IDF")
 #    for key, value in job.items():
 #        logging.debug("{}: {}".format(key, value))
+    # geometry
+    set_geometry(idf, job)
     # weather file
     set_weather(idf, job)
     # equipment
@@ -57,6 +59,11 @@ def prepare_idf(idf, job):
 
     return idf
 
+def set_geometry(idf, job):
+    """Build the geometry for the IDF.
+    """
+    return
+#    blocks = job['geometry']
 
 def set_windows(idf, job):
     wwr, u_value, shgc = (job['window2wall'], 
@@ -167,6 +174,7 @@ def set_lights(idf, job):
         elif light.Zone_or_ZoneList_Name.lower() == 'class':
             light.Watts_per_Zone_Floor_Area = job['class_light_wpm2']
 
+
 def set_equipment(idf, job):
     equips = idf.idfobjects['ELECTRICEQUIPMENT']
     for equip in equips:
@@ -175,11 +183,13 @@ def set_equipment(idf, job):
         elif equip.Zone_or_ZoneList_Name.lower() == 'class':
             equip.Watts_per_Zone_Floor_Area = job['class_equip_wpm2']
 
+
 def set_weather(idf, job):
     if job['weather_file'] < 0.5:
         idf.epw = './data/cntr_Islington_TRY.epw'
     else:
         idf.epw = './data/2050_Islington_a1b_90_percentile_TRY.epw'
+
 
 def set_infiltration(idf, job):
     for zone in idf.idfobjects['ZONE']:
@@ -192,6 +202,7 @@ def set_infiltration(idf, job):
             Air_Changes_per_Hour = job['infiltration'],
             Schedule_Name = "AlwaysOn")
         
+        
 def set_ventilation(idf, job):
     for zone in idf.idfobjects['ZONE']:
         obj_name = '{} ventilation'.format(zone.Name)
@@ -202,6 +213,7 @@ def set_ventilation(idf, job):
             Design_Flow_Rate_Calculation_Method = "Flow/Person",
             Flow_Rate_per_Person = job['ventilation'] / 1000, # l/s to m3/s
             Schedule_Name = "AlwaysOn")
+        
         
 def set_hvac(idf, job):
     kwargs = {'HVACTEMPLATE:PLANT:BOILER': 
@@ -230,6 +242,7 @@ def ideal_loads(idf, zone_name, **kwargs):
         Zone_Name=zone_name,
     Template_Thermostat_Name='Thermostat',
         )
+
 
 def boiler_only(idf, zone_name, **kwargs):
     """
@@ -269,6 +282,7 @@ def boiler_only(idf, zone_name, **kwargs):
         Baseboard_Heating_Type='HotWater',
         Template_Thermostat_Name='Thermostat',
         )
+
 
 def make_construction(idf, name, layers):
     """Add opaque and glazed constructions to the IDF.
@@ -317,6 +331,7 @@ def add_or_replace_idfobject(idf, key, aname='', **kwargs):
     if idf.getobject(key, name):
         idf.removeidfobject(idf.getobject(key, name))
     return idf.newidfobject(key, aname, **kwargs)
+
 
 def window_vertices_given_wall_vertices(vertices, glazing_ratio):
     """
