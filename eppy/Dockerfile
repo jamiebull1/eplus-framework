@@ -6,9 +6,11 @@ RUN apt-get update && apt-get install -y \
   python-dev \
   python-pip \
   python-numpy \
+  pkg-config \
+  libfreetype6-dev \
+  libpng-dev \
   git \
-  && pip install esoreader
-
-# Currently we need to use a custom build of eppy since the master branch is
-# not working properly with reading an IDF in from a file path.
-RUN pip install git+https://github.com/jamiebull1/eppy.git@develop
+  && pip install esoreader \
+  && pip install -U setuptools
+# Currently we use geomeppy which allows us to build geometry and run models.
+RUN pip install geomeppy
