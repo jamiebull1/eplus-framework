@@ -20,8 +20,8 @@ from subprocess import CalledProcessError
 from subprocess import check_call
 import tempfile
 
-from eppy.modeleditor import IDF
-
+#from eppy.modeleditor import IDF
+from geomeppy import IDF
 import multiprocessing as mp
 
 
