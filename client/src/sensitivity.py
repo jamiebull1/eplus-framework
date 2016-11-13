@@ -34,6 +34,7 @@ import numpy as np
 J_per_kWh = 3600000
 
 problem = read_param_file('/client/data/parameters.txt')
+#schools = 
 
 
 def sensitivity_analysis(job_q, result_q, sample_method, analysis_method, N):
@@ -41,6 +42,10 @@ def sensitivity_analysis(job_q, result_q, sample_method, analysis_method, N):
     """
     names, runs, empty_results = samples(sample_method, N=N)
     jobs = enumerate(zip(names, (float(n) for n in run)) for run in runs)
+    with open('/client/data/schools.json', 'r') as f:
+        schools = json.load(f)
+    school = schools.popitem()
+    print(school)
 
     logging.debug("Initialising empty results")
     elec_results = deepcopy(empty_results)
@@ -53,6 +58,7 @@ def sensitivity_analysis(job_q, result_q, sample_method, analysis_method, N):
     while np.isnan(elec_results).any():
         try:
             job = make_job_json(*jobs.next())
+            job['school'] = school
             job_q.put(job)
         except:
             pass

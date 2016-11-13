@@ -10,13 +10,96 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import StringIO
 import logging
+import os
 
-from eppy.modeleditor import IDF
+from eppy.iddcurrent import iddcurrent
 from eppy.function_helpers import getcoords
+from eppy.modeleditor import IDF
+from geomeppy.polygons import Polygon3D
+
+
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
 #logging.basicConfig(level=logging.DEBUG)
 #logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
+
+def build_school(schoolname, geom, buildings):
+    idf = init_idf()
+    idf.initnew(os.path.join(THIS_DIR, 'idfs/%s.idf' % schoolname))
+    idf.newidfobject('VERSION', Version_Identifier='8.5')
+    idf.newidfobject('BUILDING', schoolname.replace(',', ''))
+    idf.newidfobject(
+        'GLOBALGEOMETRYRULES', 
+        Starting_Vertex_Position='upperleftcorner', 
+        Vertex_Entry_Direction='counterclockwise', 
+        Coordinate_System='absolute')
+    storeys = list(buildings['No_of_storeys'])
+    heights = list(buildings['Height__m_'])
+    for i, item in enumerate(geom, 1):
+        name = 'Block %s' % i
+        poly = Polygon3D([]).from_wkt(item[0])
+        
+        height = item[1]
+        if not height:
+            height = 3.25
+        height = min(heights, key=lambda x:abs(x-height))
+        num_storeys = storeys[heights.index(height)]
+        idf.add_block(name, poly.vertices, height, num_storeys)
+    
+    print('intersecting')
+    idf.intersect()
+    print('matching')
+    idf.match()
+    print('setting wwr')
+    idf.set_wwr(0.3)
+    print('setting constructions')
+    for surface in idf.getsurfaces():
+        set_construction(surface)
+    for surface in idf.idfobjects['FENESTRATIONSURFACE:DETAILED']:
+        set_construction(surface)
+    print('setting run period')
+    idf.newidfobject('RUNPERIOD',
+                     Begin_Month = 1,
+                     Begin_Day_of_Month = 1,
+                     End_Month = 1,
+                     End_Day_of_Month = 7,
+                     )
+    print('translating')
+    idf.translate_to_origin()
+    idf.save()
+
+
+def set_construction(surface):
+    if surface.Surface_Type.lower() == 'wall':
+        if surface.Outside_Boundary_Condition.lower() == 'outdoors':
+            surface.Construction_Name = 'Project Wall'
+        elif surface.Outside_Boundary_Condition.lower() == 'ground':
+            surface.Construction_Name = 'Project Wall'
+        else:
+            surface.Construction_Name = 'Project Partition'
+    if surface.Surface_Type.lower() == 'floor':
+        if surface.Outside_Boundary_Condition.lower() == 'ground':
+            surface.Construction_Name = 'Project Ground Floor'
+        else:
+            surface.Construction_Name = 'Project Ground Floor'
+    if surface.Surface_Type.lower() == 'roof':
+        surface.Construction_Name = 'Project Flat Roof'
+    if surface.Surface_Type.lower() == 'ceiling':
+        surface.Construction_Name = 'Project Ceiling'
+    if surface.Surface_Type.lower() == 'window':
+        surface.Construction_Name = 'Project External Window'
+
+
+def init_idf():
+    """Initialise an IDF.
+    """
+    iddfhandle = StringIO(iddcurrent.iddtxt)
+    if IDF.getiddname() == None:
+        IDF.setiddname(iddfhandle)
+    idf = IDF()
+    return idf
 
 
 def prepare_idf(idf, job):
