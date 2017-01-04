@@ -16,17 +16,25 @@ import re
 import sqlite3
 
 
+JOULES_PER_KWH = 3600000
+
+
 def get_elec(eplussql):
-    elec = get_value(eplussql, "Electricity:Facility")
+    elec_joules = get_value(eplussql, "Electricity:Facility")
+    elec = elec_joules / JOULES_PER_KWH
     logging.debug('Electricity: %.2f' % elec)
     return elec
 
+
 def get_non_elec(eplussql):
-    gas = get_value(eplussql, "Gas:Facility")
+    gas_joules = get_value(eplussql, "Gas:Facility")
+    gas = gas_joules / JOULES_PER_KWH
     logging.debug('Gas: %.2f' % gas)
-    district_heat = get_value(eplussql, "DistrictHeating:Facility")
+    district_heat_joules = get_value(eplussql, "DistrictHeating:Facility")
+    district_heat = district_heat_joules / JOULES_PER_KWH
     logging.debug('District Heat: %.2f' % district_heat)
     return gas + district_heat
+
 
 def get_execution_time(eplusend):
     """Get the execution time in seconds.
