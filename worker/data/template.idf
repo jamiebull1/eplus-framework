@@ -45,6 +45,9 @@
     Yes,                     !- Use Weather File Rain Indicators
     Yes;                     !- Use Weather File Snow Indicators
 
+! ================ Schedules ===================
+  Schedule:Constant,AlwaysOn,On/Off,1.0;
+  
   ScheduleTypeLimits,
     Any Number;              !- Name
 
@@ -73,524 +76,95 @@
     1,                       !- Upper Limit Value
     DISCRETE;                !- Numeric Type
 
-  Schedule:Constant,AlwaysOn,On/Off,1.0;
-
-  Schedule:Compact,
-    ZONE CONTROL TYPE SCHED, !- Name
-    CONTROL TYPE,            !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: Alldays,            !- Field 2
-    Until: 24:00,4;          !- Field 3
-
-  Schedule:Compact,
-    HeatingSetpointSchedule, !- Name
-    Temperature,             !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: Alldays,            !- Field 2
-    Until: 24:00,21;         !- Field 3
-
-  Schedule:Compact,
-    CoolingSetpointSchedule, !- Name
-    Temperature,             !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: Alldays,            !- Field 2
-    Until: 24:00,100;        !- Field 3
-
-  Schedule:Compact,
-    Class Metabolism,        !- Name
-    Any Number,              !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: Alldays,            !- Field 2
-    Until: 24:00,60;         !- Field 3
-
-  Schedule:Compact,
-    Admin Metabolism,        !- Name
-    Any Number,              !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: Alldays,            !- Field 2
-    Until: 24:00,80;         !- Field 3
-
-  Schedule:Compact,
-    Class Occupancy,         !- Name
-    Fraction,                !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: Alldays,            !- Field 2
-    Until: 9:00,0,           !- Field 3
-    Until: 16:00,1,          !- Field 5
-    Until: 24:00,0;          !- Field 7
-
-  Schedule:Compact,
-    Admin Occupancy,         !- Name
-    Fraction,                !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: Alldays,            !- Field 2
-    Until: 8:30,0,           !- Field 3
-    Until: 17:30,1,          !- Field 5
-    Until: 24:00,0;          !- Field 7
-
-!- Windows Line endings
-
-  ZONE,
-    osgb01,                  !- Name
-    0.0,                     !- Direction of Relative North {deg}
-    0.0,                     !- X Origin {m}
-    0.0,                     !- Y Origin {m}
-    0.0,                     !- Z Origin {m}
-    1,                       !- Type
-    1,                       !- Multiplier
-    autocalculate,           !- Ceiling Height {m}
-    autocalculate,           !- Volume {m3}
-    autocalculate,           !- Floor Area {m2}
-    ,                        !- Zone Inside Convection Algorithm
-    ,                        !- Zone Outside Convection Algorithm
-    Yes;                     !- Part of Total Floor Area
-
-  ZONE,
-    osgb02,                  !- Name
-    0.0,                     !- Direction of Relative North {deg}
-    0.0,                     !- X Origin {m}
-    0.0,                     !- Y Origin {m}
-    0.0,                     !- Z Origin {m}
-    1,                       !- Type
-    1,                       !- Multiplier
-    autocalculate,           !- Ceiling Height {m}
-    autocalculate,           !- Volume {m3}
-    autocalculate,           !- Floor Area {m2}
-    ,                        !- Zone Inside Convection Algorithm
-    ,                        !- Zone Outside Convection Algorithm
-    Yes;                     !- Part of Total Floor Area
-
-  BUILDINGSURFACE:DETAILED,
-    osgb01_WALL_0000,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb01,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    ,                        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    1.0,0.0,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    1.0,1.0,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    1.0,1.0,0,  !- X,Y,Z ==> Vertex 3 {m}
-    1.0,0.0,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb01_WALL_0001,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb01,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    ,                        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    0.0,0.1,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    1.0,0.0,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    1.0,0.0,0,  !- X,Y,Z ==> Vertex 3 {m}
-    0.0,0.1,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb01_WALL_0002,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb01,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    ,                        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    0.0,1.1,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    0.0,0.1,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    0.0,0.1,0,  !- X,Y,Z ==> Vertex 3 {m}
-    0.0,1.1,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb01_WALL_0003,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb01,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    ,                        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    0.5,1.05,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    0.0,1.1,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    0.0,1.1,0,  !- X,Y,Z ==> Vertex 3 {m}
-    0.5,1.05,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb01_WALL_0004,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb01,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    osgb02_WALL_0000,        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    1.0,1.0,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    0.5,1.05,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    0.5,1.05,0,  !- X,Y,Z ==> Vertex 3 {m}
-    1.0,1.0,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb01_FLOOR_0000,       !- Name
-    FLOOR,                   !- Surface Type
-    dummy_floor,             !- Construction Name
-    osgb01,                  !- Zone Name
-    ground,                  !- Outside Boundary Condition
-    ground,                  !- Outside Boundary Condition Object
-    NoSun,                   !- Sun Exposure
-    NoWind,                  !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    5,                       !- Number of Vertices
-    1.0,1.0,0,  !- X,Y,Z ==> Vertex 1 {m}
-    1.0,0.0,0,  !- X,Y,Z ==> Vertex 2 {m}
-    0.0,0.1,0,  !- X,Y,Z ==> Vertex 3 {m}
-    0.0,1.1,0,  !- X,Y,Z ==> Vertex 4 {m}
-    0.5,1.05,0;  !- X,Y,Z ==> Vertex 5 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb01_ROOF_0000,        !- Name
-    ROOF,                    !- Surface Type
-    dummy_roof,              !- Construction Name
-    osgb01,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    outdoors,                !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    5,                       !- Number of Vertices
-    0.5,1.05,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    0.0,1.1,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    0.0,0.1,1.0,  !- X,Y,Z ==> Vertex 3 {m}
-    1.0,0.0,1.0,  !- X,Y,Z ==> Vertex 4 {m}
-    1.0,1.0,1.0;  !- X,Y,Z ==> Vertex 5 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb02_WALL_0000,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb02,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    osgb01_WALL_0004,        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    0.5,1.05,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    1.0,1.0,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    1.0,1.0,0,  !- X,Y,Z ==> Vertex 3 {m}
-    0.5,1.05,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb02_WALL_0001,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb02,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    ,                        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    0.5,2.05,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    0.5,1.05,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    0.5,1.05,0,  !- X,Y,Z ==> Vertex 3 {m}
-    0.5,2.05,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb02_WALL_0002,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb02,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    ,                        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    1.5,1.95,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    0.5,2.05,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    0.5,2.05,0,  !- X,Y,Z ==> Vertex 3 {m}
-    1.5,1.95,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb02_WALL_0003,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb02,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    ,                        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    1.5,0.95,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    1.5,1.95,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    1.5,1.95,0,  !- X,Y,Z ==> Vertex 3 {m}
-    1.5,0.95,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb02_WALL_0004,        !- Name
-    WALL,                    !- Surface Type
-    dummy_wall,              !- Construction Name
-    osgb02,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    ,                        !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    4,                       !- Number of Vertices
-    1.0,1.0,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    1.5,0.95,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    1.5,0.95,0,  !- X,Y,Z ==> Vertex 3 {m}
-    1.0,1.0,0;  !- X,Y,Z ==> Vertex 4 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb02_FLOOR_0000,       !- Name
-    FLOOR,                   !- Surface Type
-    dummy_floor,             !- Construction Name
-    osgb02,                  !- Zone Name
-    ground,                  !- Outside Boundary Condition
-    ground,                  !- Outside Boundary Condition Object
-    NoSun,                   !- Sun Exposure
-    NoWind,                  !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    5,                       !- Number of Vertices
-    1.0,1.0,0,  !- X,Y,Z ==> Vertex 1 {m}
-    0.5,1.05,0,  !- X,Y,Z ==> Vertex 2 {m}
-    0.5,2.05,0,  !- X,Y,Z ==> Vertex 3 {m}
-    1.5,1.95,0,  !- X,Y,Z ==> Vertex 4 {m}
-    1.5,0.95,0;  !- X,Y,Z ==> Vertex 5 {m}
-
-  BUILDINGSURFACE:DETAILED,
-    osgb02_ROOF_0000,        !- Name
-    ROOF,                    !- Surface Type
-    dummy_roof,              !- Construction Name
-    osgb02,                  !- Zone Name
-    outdoors,                !- Outside Boundary Condition
-    outdoors,                !- Outside Boundary Condition Object
-    SunExposed,              !- Sun Exposure
-    WindExposed,             !- Wind Exposure
-    autocalculate,           !- View Factor to Ground
-    5,                       !- Number of Vertices
-    1.5,0.95,1.0,  !- X,Y,Z ==> Vertex 1 {m}
-    1.5,1.95,1.0,  !- X,Y,Z ==> Vertex 2 {m}
-    0.5,2.05,1.0,  !- X,Y,Z ==> Vertex 3 {m}
-    0.5,1.05,1.0,  !- X,Y,Z ==> Vertex 4 {m}
-    1.0,1.0,1.0;  !- X,Y,Z ==> Vertex 5 {m}
-
-  Material,
-    wall,                    !- Name
-    Rough,                   !- Roughness
-    0.1,                     !- Thickness {m}
-    1,                       !- Conductivity {W/m-K}
-    2000,                    !- Density {kg/m3}
-    900,                     !- Specific Heat {J/kg-K}
-    0.9000000,               !- Thermal Absorptance
-    0.9300000,               !- Solar Absorptance
-    0.9300000;               !- Visible Absorptance
-
-  Material,
-    roof,                    !- Name
-    Rough,                   !- Roughness
-    0.1,                     !- Thickness {m}
-    1,                       !- Conductivity {W/m-K}
-    2000,                    !- Density {kg/m3}
-    900,                     !- Specific Heat {J/kg-K}
-    0.9000000,               !- Thermal Absorptance
-    0.9300000,               !- Solar Absorptance
-    0.9300000;               !- Visible Absorptance
-
-  Material,
-    floor,                   !- Name
-    Rough,                   !- Roughness
-    0.1,                     !- Thickness {m}
-    1.245296,                !- Conductivity {W/m-K}
-    2000,                    !- Density {kg/m3}
-    900,                     !- Specific Heat {J/kg-K}
-    0.9000000,               !- Thermal Absorptance
-    0.9300000,               !- Solar Absorptance
-    0.9300000;               !- Visible Absorptance
+! ========== Opaque constructions ==============
+  Construction,
+    Project Wall,                       !- Name
+    ExternalWallMaterialInner;                   !- Inside Layer
 
   Construction,
-    dummy_wall,              !- Name
-    wall;                    !- Outside Layer
+    Project Flat Roof,                       !- Name
+    ExternalRoofMaterialInner;                   !- Inside Layer
 
   Construction,
-    dummy_roof,              !- Name
-    roof;                    !- Outside Layer
+    Project Ceiling,                       !- Name
+    InternalCeilingMaterial;                   !- Inside Layer
 
   Construction,
-    dummy_floor,             !- Name
-    floor;                   !- Outside Layer
+    Project Ground Floor,                       !- Name
+    ExternalFloorMaterialInner;                   !- Inside Layer
 
-  Lights,
-    ClassLights,             !- Name
-    Class,                   !- Zone or ZoneList Name
-    Class Occupancy,         !- Schedule Name
-    Watts/Area,              !- Design Level Calculation Method
-    ,                        !- Lighting Level {W}
-    ,                        !- Watts per Zone Floor Area {W/m2}
-    ,                        !- Watts per Person {W/person}
-    0,                       !- Return Air Fraction
-    0.59,                    !- Fraction Radiant
-    0.2,                     !- Fraction Visible
-    1.0,                     !- Fraction Replaceable
-    GeneralLights;           !- End-Use Subcategory
+  Construction,
+    Project Partition,                       !- Name
+    InternalPartitionMaterial;                !- 
+	
+!  Construction,
+!    Project External Window,                    !- Name
+!   ExternalWindowMaterial;          !- Outside Layer
+  
+!   ===========  ALL OBJECTS IN CLASS: MATERIAL ===========
+   Material,
+	ExternalWallMaterialInner,
+    Rough,                   !- Roughness
+    0.10,                     !- Thickness {m}
+    10,	!- Conductivity {W/m-K}
+    1000.0,                 !- Density {kg/m3}
+    1000,	!- Specific Heat {J/kg-K}
+    0.9,                     !- Thermal Absorptance
+    0.6,                     !- Solar Absorptance
+    0.6;                     !- Visible Absorptance
+  
+   Material,
+	ExternalRoofMaterialInner,
+    Rough,                   !- Roughness
+    0.10,                     !- Thickness {m}
+    10,	!- Conductivity {W/m-K}
+    1000.0,                 !- Density {kg/m3}
+    1000,	!- Specific Heat {J/kg-K}
+    0.9,                     !- Thermal Absorptance
+    0.6,                     !- Solar Absorptance
+    0.6;                     !- Visible Absorptance
+  
+   Material,
+	ExternalFloorMaterialInner,
+    Rough,                   !- Roughness
+    0.10,                     !- Thickness {m}
+    10,	!- Conductivity {W/m-K}
+    1000.0,                 !- Density {kg/m3}
+    1000,	!- Specific Heat {J/kg-K}
+    0.9,                     !- Thermal Absorptance
+    0.6,                     !- Solar Absorptance
+    0.6;                     !- Visible Absorptance
+  
+   Material,
+	InternalPartitionMaterial,
+    Rough,                   !- Roughness
+    0.10,                     !- Thickness {m}
+    10,	!- Conductivity {W/m-K}
+    1000.0,                 !- Density {kg/m3}
+    1000,	!- Specific Heat {J/kg-K}
+    0.9,                     !- Thermal Absorptance
+    0.6,                     !- Solar Absorptance
+    0.6;                     !- Visible Absorptance
+  
+   Material,
+	InternalCeilingMaterial,
+    Rough,                   !- Roughness
+    0.10,                     !- Thickness {m}
+    10,	!- Conductivity {W/m-K}
+    1000.0,                 !- Density {kg/m3}
+    1000,	!- Specific Heat {J/kg-K}
+    0.9,                     !- Thermal Absorptance
+    0.6,                     !- Solar Absorptance
+    0.6;                     !- Visible Absorptance
+  
+  
+!  WindowMaterial:SimpleGlazingSystem,
+!    ExternalWindowMaterial,         !- Name
+!    5,	!- U-Factor {W/m2-K}
+!    0.80,	!- Solar Heat Gain Coefficient
+!    0.90;	!- Visible Transmittance
 
-  Lights,
-    AdminLights,             !- Name
-    Admin,                   !- Zone or ZoneList Name
-    Admin Occupancy,         !- Schedule Name
-    Watts/Area,              !- Design Level Calculation Method
-    ,                        !- Lighting Level {W}
-    ,                        !- Watts per Zone Floor Area {W/m2}
-    ,                        !- Watts per Person {W/person}
-    0,                       !- Return Air Fraction
-    0.59,                    !- Fraction Radiant
-    0.2,                     !- Fraction Visible
-    1.0,                     !- Fraction Replaceable
-    GeneralLights;           !- End-Use Subcategory
-
-  ElectricEquipment,
-    ClassElec,               !- Name
-    Class,                   !- Zone or ZoneList Name
-    Class Occupancy,         !- Schedule Name
-    Watts/Area,              !- Design Level Calculation Method
-    ,                        !- Design Level {W}
-    ,                        !- Watts per Zone Floor Area {W/m2}
-    ,                        !- Watts per Person {W/person}
-    0.59,                    !- Fraction Latent
-    0.2,                     !- Fraction Radiant
-    0,                       !- Fraction Lost
-    GeneralElecEquipment;    !- End-Use Subcategory
-
-  ElectricEquipment,
-    AdminElec,               !- Name
-    Admin,                   !- Zone or ZoneList Name
-    Admin Occupancy,         !- Schedule Name
-    Watts/Area,              !- Design Level Calculation Method
-    ,                        !- Design Level {W}
-    ,                        !- Watts per Zone Floor Area {W/m2}
-    ,                        !- Watts per Person {W/person}
-    0.59,                    !- Fraction Latent
-    0.2,                     !- Fraction Radiant
-    0,                       !- Fraction Lost
-    GeneralElecEquipment;    !- End-Use Subcategory
-
-  ZoneList,
-    All Zones,               !- Name
-    osgb01,                  !- Zone 1 Name
-    osgb02;                  !- Zone 2 Name
-
-  ZoneList,
-    Class,                   !- Name
-    osgb01;                  !- Zone 1 Name
-
-  ZoneList,
-    Admin,                   !- Name
-    osgb02;                  !- Zone 1 Name
-
-  SizingPeriod:DesignDay,
-    ctr_Islington Annual Heating 99% Design Conditions,  !- Name
-    1,                       !- Month
-    1,                       !- Day of Month
-    WinterDesignDay,         !- Day Type
-    -3.6,                    !- Maximum Dry-Bulb Temperature {C}
-    0.0,                     !- Daily Dry-Bulb Temperature Range {deltaC}
-    ,                        !- Dry-Bulb Temperature Range Modifier Type
-    ,                        !- Dry-Bulb Temperature Range Modifier Day Schedule Name
-    Wetbulb,                 !- Humidity Condition Type
-    -3.6,                    !- Wetbulb or DewPoint at Maximum Dry-Bulb {C}
-    ,                        !- Humidity Condition Day Schedule Name
-    ,                        !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
-    ,                        !- Enthalpy at Maximum Dry-Bulb {J/kg}
-    ,                        !- Daily Wet-Bulb Temperature Range {deltaC}
-    101025,                  !- Barometric Pressure {Pa}
-    5.1,                     !- Wind Speed {m/s}
-    270,                     !- Wind Direction {deg}
-    No,                      !- Rain Indicator
-    No,                      !- Snow Indicator
-    No,                      !- Daylight Saving Time Indicator
-    ASHRAEClearSky,          !- Solar Model Indicator
-    ,                        !- Beam Solar Day Schedule Name
-    ,                        !- Diffuse Solar Day Schedule Name
-    ,                        !- ASHRAE Clear Sky Optical Depth for Beam Irradiance (taub) {dimensionless}
-    ,                        !- ASHRAE Clear Sky Optical Depth for Diffuse Irradiance (taud) {dimensionless}
-    0.0;                     !- Sky Clearness
-
-  SizingPeriod:DesignDay,
-    ctr_Islington Annual Annual Cooling 1% Design Conditions,  !- Name
-    7,                       !- Month
-    29,                      !- Day of Month
-    SummerDesignDay,         !- Day Type
-    25.2,                    !- Maximum Dry-Bulb Temperature {C}
-    10.7,                    !- Daily Dry-Bulb Temperature Range {deltaC}
-    ,                        !- Dry-Bulb Temperature Range Modifier Type
-    ,                        !- Dry-Bulb Temperature Range Modifier Day Schedule Name
-    Wetbulb,                 !- Humidity Condition Type
-    14.8,                    !- Wetbulb or DewPoint at Maximum Dry-Bulb {C}
-    ,                        !- Humidity Condition Day Schedule Name
-    ,                        !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
-    ,                        !- Enthalpy at Maximum Dry-Bulb {J/kg}
-    ,                        !- Daily Wet-Bulb Temperature Range {deltaC}
-    101025,                  !- Barometric Pressure {Pa}
-    4.0,                     !- Wind Speed {m/s}
-    230,                     !- Wind Direction {deg}
-    No,                      !- Rain Indicator
-    No,                      !- Snow Indicator
-    No,                      !- Daylight Saving Time Indicator
-    ASHRAEClearSky,          !- Solar Model Indicator
-    ,                        !- Beam Solar Day Schedule Name
-    ,                        !- Diffuse Solar Day Schedule Name
-    ,                        !- ASHRAE Clear Sky Optical Depth for Beam Irradiance (taub) {dimensionless}
-    ,                        !- ASHRAE Clear Sky Optical Depth for Diffuse Irradiance (taud) {dimensionless}
-    1.0;                     !- Sky Clearness
-
-  PEOPLE,
-    Class People,            !- Name
-    Class,                   !- Zone or ZoneList Name
-    Class Occupancy,         !- Number of People Schedule Name
-    People/Area,             !- Number of People Calculation Method
-    ,                        !- Number of People
-    0.269435540241,          !- People per Zone Floor Area {person/m2}
-    ,                        !- Zone Floor Area per Person {m2/person}
-    0.3,                     !- Fraction Radiant
-    autocalculate,           !- Sensible Heat Fraction
-    Class Metabolism,        !- Activity Level Schedule Name
-    3.82e-08,                !- Carbon Dioxide Generation Rate {m3/s-W}
-    No,                      !- Enable ASHRAE 55 Comfort Warnings
-    ZoneAveraged,            !- Mean Radiant Temperature Calculation Type
-    ,                        !- Surface Name/Angle Factor List Name
-    ,                        !- Work Efficiency Schedule Name
-    ;                        !- Clothing Insulation Calculation Method
-
-  PEOPLE,
-    Admin People,            !- Name
-    Admin,                   !- Zone or ZoneList Name
-    Admin Occupancy,         !- Number of People Schedule Name
-    People/Area,             !- Number of People Calculation Method
-    ,                        !- Number of People
-    0.269435540241,          !- People per Zone Floor Area {person/m2}
-    ,                        !- Zone Floor Area per Person {m2/person}
-    0.3,                     !- Fraction Radiant
-    autocalculate,           !- Sensible Heat Fraction
-    Admin Metabolism,        !- Activity Level Schedule Name
-    3.82e-08,                !- Carbon Dioxide Generation Rate {m3/s-W}
-    No,                      !- Enable ASHRAE 55 Comfort Warnings
-    ZoneAveraged,            !- Mean Radiant Temperature Calculation Type
-    ,                        !- Surface Name/Angle Factor List Name
-    ,                        !- Work Efficiency Schedule Name
-    ;                        !- Clothing Insulation Calculation Method
+! ============================================
 
   Output:Table:SummaryReports,
     AllSummary;              !- Report 1 Name

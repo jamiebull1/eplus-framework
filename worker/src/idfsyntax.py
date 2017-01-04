@@ -10,65 +10,137 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import StringIO
 import logging
 import os
 
-from eppy.iddcurrent import iddcurrent
 from eppy.function_helpers import getcoords
-from eppy.modeleditor import IDF
-from geomeppy.polygons import Polygon3D
+from eppy.iddcurrent import iddcurrent
+from geomeppy import IDF
+from geomeppy.polygons import Polygon
+from geomeppy.vectors import Vector3D  # used inside eval
+from six import StringIO
+
+from src.schedules import activities_proportions
+from src.schedules import make_rates
+from src.schedules import make_schedules
+from src.schedules import stretch
 
 
+#from worker.tests.test_schedules import activities_proportions
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 #logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
-def build_school(schoolname, geom, buildings):
-    idf = init_idf()
-    idf.initnew(os.path.join(THIS_DIR, 'idfs/%s.idf' % schoolname))
-    idf.newidfobject('VERSION', Version_Identifier='8.5')
-    idf.newidfobject('BUILDING', schoolname.replace(',', ''))
-    idf.newidfobject(
-        'GLOBALGEOMETRYRULES', 
-        Starting_Vertex_Position='upperleftcorner', 
-        Vertex_Entry_Direction='counterclockwise', 
-        Coordinate_System='absolute')
-    storeys = list(buildings['No_of_storeys'])
-    heights = list(buildings['Height__m_'])
-    for i, item in enumerate(geom, 1):
-        name = 'Block %s' % i
-        poly = Polygon3D([]).from_wkt(item[0])
-        
-        height = item[1]
+DDY = './data/weather/islington/cntr_Islington_TRY.ddy'
+
+def init_idf():
+    """Initialise an IDF.
+    """
+    iddfhandle = StringIO(iddcurrent.iddtxt)
+    if IDF.getiddname() == None:
+        IDF.setiddname(iddfhandle)
+    idf = IDF()
+    return idf
+
+
+def prepare_idf(idf, job, school):
+    logging.debug("Editing IDF")
+    for key, value in job.items():
+        logging.debug("{}: {}".format(key, value))
+    # geometry
+    idf = set_geometry(idf, job, school)
+    # weather file
+    set_weather(idf, job)
+    # equipment
+    set_equipment(idf, job)
+    # occupancy
+    set_occupancy(idf, job)
+    # schedules
+    set_schedules(idf, job)
+    # lighting
+    set_lights(idf, job)
+    # HVAC
+    set_hvac(idf, job)
+    # infiltration and ventilation
+    set_infiltration(idf, job)
+    set_ventilation(idf, job)
+    # windows
+    set_windows(idf, job)
+    # convection algorithms
+    set_convection_algorithms(idf, job)
+    # timesteps
+    set_timestep(idf, job)
+    # daylighting
+    set_daylighting(idf, job)
+
+    # fabric U values (add dummy constructions)
+    set_u_value(idf, 'ExternalWallMaterialInner', job['wall_u_value'])
+    set_u_value(idf, 'ExternalFloorMaterialInner', job['floor_u_value'])
+    set_u_value(idf, 'ExternalRoofMaterialInner', job['roof_u_value'])
+
+    set_density(idf, 'ExternalWallMaterialInner', job['density'])
+    set_density(idf, 'ExternalFloorMaterialInner', job['density'])
+    set_density(idf, 'ExternalRoofMaterialInner', job['density'])
+
+    return idf
+    # set wall thermal mass
+    # set floor thermal mass
+    # set roof thermal mass
+
+
+def set_geometry(idf, job, school):
+    """Build the geometry for the IDF.
+    """
+    name = school[0]
+    blocks = school[1]['blocks']
+    shading_blocks = school[1]['shading_blocks']
+    
+    idf = build_school(idf, name, blocks, shading_blocks)
+    return idf
+
+
+def build_school(idf, schoolname, blocks, shading_blocks):
+    """Build a school.
+    
+    Parameters
+    ----------
+    schoolname : str
+        Name of the school.
+    blocks : 
+    """
+    for block in blocks:
+        name = block['name']
+        poly = Polygon(eval(block['wkt']))        
+        height = float(block['height'])
         if not height:
             height = 3.25
-        height = min(heights, key=lambda x:abs(x-height))
-        num_storeys = storeys[heights.index(height)]
+        num_storeys = int(block['num_storeys'])
         idf.add_block(name, poly.vertices, height, num_storeys)
+    for block in shading_blocks:
+        name = block['name']
+        poly = Polygon(eval(block['wkt']))        
+        height = float(block['height'])
+        if not height:
+            continue
+        num_storeys = 1
+        idf.add_shading_block(name, poly.vertices, height)
     
-    print('intersecting')
+    logging.debug('intersecting')
     idf.intersect()
-    print('matching')
+    logging.debug('matching')
     idf.match()
-    print('setting wwr')
-    idf.set_wwr(0.3)
-    print('setting constructions')
+#    logging.debug('setting wwr')
+#    idf.set_wwr(0.3)
+    logging.debug('setting constructions')
     for surface in idf.getsurfaces():
         set_construction(surface)
     for surface in idf.idfobjects['FENESTRATIONSURFACE:DETAILED']:
         set_construction(surface)
-    print('setting run period')
-    idf.newidfobject('RUNPERIOD',
-                     Begin_Month = 1,
-                     Begin_Day_of_Month = 1,
-                     End_Month = 1,
-                     End_Day_of_Month = 7,
-                     )
-    print('translating')
+    logging.debug('translating')
     idf.translate_to_origin()
-    idf.save()
+
+    return idf
 
 
 def set_construction(surface):
@@ -92,97 +164,203 @@ def set_construction(surface):
         surface.Construction_Name = 'Project External Window'
 
 
-def init_idf():
-    """Initialise an IDF.
-    """
-    iddfhandle = StringIO(iddcurrent.iddtxt)
-    if IDF.getiddname() == None:
-        IDF.setiddname(iddfhandle)
-    idf = IDF()
-    return idf
-
-
-def prepare_idf(idf, job):
-    logging.debug("Editing IDF")
-#    for key, value in job.items():
-#        logging.debug("{}: {}".format(key, value))
-    # geometry
-    set_geometry(idf, job)
-    # weather file
-    set_weather(idf, job)
-    # equipment
-    set_equipment(idf, job)
-    # lighting
-    set_lights(idf, job)
-    # infiltration and ventilation
-    set_infiltration(idf, job)
-    set_ventilation(idf, job)
-    # fabric U values (add dummy constructions)
-    set_u_value(idf, 'wall', job['wall_u_value'])
-    set_u_value(idf, 'floor', job['floor_u_value'])
-    set_u_value(idf, 'roof', job['roof_u_value'])
-    # set wall thermal mass
-    # set floor thermal mass
-    # set roof thermal mass
+def set_weather(idf, job):
+    """Set the weather file for the job.
     
-    # windows
-    set_windows(idf, job)
-    # occupancy
-    set_occupancy(idf, job)
-    # schedules
-    
-    # HVAC
-    set_hvac(idf, job)
-    # convection algorithms
-    set_convection_algorithms(idf, job)
-    # timesteps
-    set_timestep(idf, job)
-    # daylighting
-    set_daylighting(idf, job)
+    Parameters
+    ----------
+    idf : IDF
+        An Eppy IDF object.
+    job : dict
+        Dict containing the parameters.
 
-    return idf
-
-def set_geometry(idf, job):
-    """Build the geometry for the IDF.
     """
-    return
-#    blocks = job['geometry']
+    if job['weather_file'] < 0.5:
+        idf.epw = './data/weather/islington/cntr_Islington_TRY.epw'
+    else:
+        idf.epw = './data/weather/islington/2050_Islington_a1b_90_percentile_TRY.epw'
+
+
+def set_occupancy(idf, job):
+    """Set up occupancy for each zone.
+    
+    Parameters
+    ----------
+    idf : IDF
+        An Eppy IDF object.
+    job : dict
+        Dict containing the parameters.
+
+    """
+    zones = idf.idfobjects['ZONE']
+    for zone in zones:
+        item = idf.newidfobject('PEOPLE')
+        item.Name = '%s occupancy' % zone.Name
+        item.Zone_or_ZoneList_Name = zone.Name
+        item.Number_of_People_Calculation_Method='People/Area'
+        item.People_per_Zone_Floor_Area = job['occupancy']
+        item.Fraction_Radiant = '0.3'
+        item.Number_of_People_Schedule_Name = '%s_Occ' % zone.Name
+        item.Activity_Level_Schedule_Name = '%s_Metab' % zone.Name
+
+
+def set_equipment(idf, job):
+    """Set up equipment loads for each zone.
+    
+    Parameters
+    ----------
+    idf : IDF
+        An Eppy IDF object.
+    job : dict
+        Dict containing the parameters.
+
+    """
+    zones = idf.idfobjects['ZONE']
+    for zone in zones:
+        item = idf.newidfobject('ELECTRICEQUIPMENT')
+        item.Name = '%s equipment' % zone.Name
+        item.Zone_or_ZoneList_Name = zone.Name
+        item.Design_Level_Calculation_Method='Watts/Area'
+        item.Schedule_Name = 'AlwaysOn'
+        item.Watts_per_Zone_Floor_Area = job['equip_wpm2']
+
+
+def set_schedules(idf, job):
+    """Set up schedules for each zone.
+    
+    Required schedule types are occupancy, lighting, heating, cooling, 
+    equipment, and metabolism.
+    
+    Parameters
+    ----------
+    idf : IDF
+        An Eppy IDF object.
+    job : dict
+        Dict containing the parameters.
+
+    """
+    zones = idf.idfobjects['ZONE']
+
+    gifa = sum(s.area for s in idf.getsurfaces('floor'))
+    activities = activities_proportions(gifa)
+
+    schedule_types = ['Heat', 'Cool', 'Light', 'Equip', 'Occ']
+    schedules = make_schedules(zones, schedule_types, activities)
+    coef = 1 + float(job['schedules'])
+    for zone in schedules:
+        for st in schedules[zone]:
+            schedules[zone][st] = stretch(schedules[zone][st], coef, 12)
+
+    write_schedules(idf, schedules, 'school')
+
+    rate_types = ['Metab']
+    rates = make_rates(zones, rate_types, activities)
+    write_rates(idf, rates)
+
+
+def write_schedules(idf, all_zone_schedules, record):
+    """Add area weighted schedules for all activity zones to the IDF.
+    
+    Parameters
+    ----------
+    all_zone_schedules : dict
+       Dictionary containing hourly schedules for each schedule type.
+    record : int or str
+        Name of the record.
+    
+    """
+    col_num = 1
+    for zone in all_zone_schedules:
+#        logging.info(zone)
+        for st in all_zone_schedules[zone]:
+            idf.newidfobject(
+                'SCHEDULE:FILE',
+                Name='%s_%s' % (zone, st),
+                Schedule_Type_Limits_Name='Any Number',
+                File_Name='{}_schedules.csv'.format(record),
+                Column_Number=col_num,
+                Rows_to_Skip_at_Top=1,
+                Number_of_Hours_of_Data=len(all_zone_schedules[zone][st]),
+                Column_Separator='Comma'
+                )
+            col_num += 1
+    write_schedules_file(all_zone_schedules, record)
+
+
+def write_rates(idf, all_zone_rates):
+    """
+    Add area weighted schedules for all activity zones to the IDF. This is for
+    things like metabolic rate which is a constant value modified by the
+    occupancy schedule.
+    
+    Parameters
+    ----------
+    all_zone_rates : dict
+       Dictionary containing peak rates for each rate schedule type.
+    
+    """
+#    logging.info(all_zone_rates)
+    for zone in all_zone_rates:
+        for rate in all_zone_rates[zone]:
+            idf.newidfobject(
+                'SCHEDULE:COMPACT',
+                Name='%s_%s' % (zone, rate),
+                Schedule_Type_Limits_Name='Any Number',
+                Field_1='Through: 12/31',
+                Field_2='For: Alldays',
+                Field_3='Until: 24:00,{0}'.format(all_zone_rates[zone][rate])
+                )
+        
+        
+def write_schedules_file(all_zone_schedules, record):
+    """
+    Write out the hourly schedules to a 'schedule.csv' file in the working
+    directory.
+    
+    Parameters
+    ----------
+    all_zone_schedules : list
+        A list of all the schedules for all the zones.
+    record : int or str
+        Name of the record.
+
+    """
+    csv_filename = '{}_schedules.csv'.format(record)
+    hourly_schedules = []
+    for zone in all_zone_schedules:
+        for st in all_zone_schedules[zone]:
+            hourly_schedules += [all_zone_schedules[zone][st]]
+    # transpose to tuples for each hour
+    hourly_schedules = zip(*hourly_schedules)
+    header = []
+    for zone in all_zone_schedules:
+        for st in all_zone_schedules[zone]:
+            header += ['%s_%s' % (zone, st)]
+    header = ','.join(header) + '\n'
+    with open(csv_filename, 'wb') as csv:
+        csv.write(header)
+        for hour in hourly_schedules:
+            # Convert from numpy datatypes
+            csv.write(','.join([str(h) for h in hour]) + '\n')
+
 
 def set_windows(idf, job):
     wwr, u_value, shgc = (job['window2wall'], 
                           job['window_u_value'], 
                           job['window_shgc'])
     # set window properties
-    layer = idf.newidfobject(
-        'WINDOWMATERIAL:SIMPLEGLAZINGSYSTEM', 
-        Name = 'WindowGlazing',
-        UFactor = u_value,
-        Solar_Heat_Gain_Coefficient = shgc,        
-        )
-    construction = idf.newidfobject(
-        'CONSTRUCTION',
-        Name='dummy_window',
-        Outside_Layer=layer.Name
-        )
-    
-    # get external walls
-    walls = [w for w in idf.idfobjects['BUILDINGSURFACE:DETAILED']
-             if w.Outside_Boundary_Condition.lower() == 'outdoors'
-             and w.Surface_Type.lower() == 'wall']
-    # add windows
-    for wall in walls:
-        pts = window_vertices_given_wall_vertices(vertices(wall), wwr)
-        window = idf.newidfobject('FENESTRATIONSURFACE:DETAILED',
-            Name = wall.Name + " WINDOW",
-            Surface_Type = 'Window',
-            Construction_Name = 'dummy_window',
-            Building_Surface_Name = wall.Name,
-            Number_of_Vertices = len(pts)
-        )
-        for i, v in enumerate(pts):
-            window['Vertex_{0}_Xcoordinate'.format(i+1)] = v[0]
-            window['Vertex_{0}_Ycoordinate'.format(i+1)] = v[1]
-            window['Vertex_{0}_Zcoordinate'.format(i+1)] = v[2]
+    layer = add_or_replace_idfobject(idf, 'WINDOWMATERIAL:SIMPLEGLAZINGSYSTEM')
+    layer.Name = 'ExternalWindowMaterial'
+    layer.UFactor = u_value
+    layer.Solar_Heat_Gain_Coefficient = shgc
+    construction = add_or_replace_idfobject(idf, 'CONSTRUCTION')
+    construction.Name = 'Project External Window'
+    construction.Outside_Layer = layer.Name
+    # set window:wall ratio
+    idf.set_wwr(wwr)
+    windows = idf.idfobjects['FENESTRATIONSURFACE:DETAILED']
+    for window in windows:
+        window.Construction_Name = 'Project External Window'
         
 
 def set_convection_algorithms(idf, job):
@@ -226,15 +404,6 @@ def set_daylighting(idf, job):
             )
 
 
-def set_occupancy(idf, job):
-    occupants = idf.idfobjects['PEOPLE']
-    for occ in occupants:
-        if occ.Zone_or_ZoneList_Name.lower() == 'admin':
-            occ.People_per_Zone_Floor_Area = job['admin_occupancy']
-        elif occ.Zone_or_ZoneList_Name.lower() == 'class':
-            occ.People_per_Zone_Floor_Area = job['class_occupancy']
-
-
 def set_u_value(idf, name, target_u):
     material = idf.getobject('MATERIAL', name)
     m = material.Thickness
@@ -242,62 +411,48 @@ def set_u_value(idf, name, target_u):
     material.Conductivity = m  / ((1 / target_u) - surface_R)
  
     
-def set_thermal_mass(idf, name, target_u):
+def set_density(idf, name, density):
     material = idf.getobject('MATERIAL', name)
-    m = material.Thickness
-    surface_R = 0.18
-    material.Conductivity = m  / ((1 / target_u) - surface_R)
+    material.Density = density
     
 
 def set_lights(idf, job):
-    lights = idf.idfobjects['LIGHTS']
-    for light in lights:
-        if light.Zone_or_ZoneList_Name.lower() == 'admin':
-            light.Watts_per_Zone_Floor_Area = job['admin_light_wpm2']
-        elif light.Zone_or_ZoneList_Name.lower() == 'class':
-            light.Watts_per_Zone_Floor_Area = job['class_light_wpm2']
-
-
-def set_equipment(idf, job):
-    equips = idf.idfobjects['ELECTRICEQUIPMENT']
-    for equip in equips:
-        if equip.Zone_or_ZoneList_Name.lower() == 'admin':
-            equip.Watts_per_Zone_Floor_Area = job['admin_equip_wpm2']
-        elif equip.Zone_or_ZoneList_Name.lower() == 'class':
-            equip.Watts_per_Zone_Floor_Area = job['class_equip_wpm2']
-
-
-def set_weather(idf, job):
-    if job['weather_file'] < 0.5:
-        idf.epw = './data/cntr_Islington_TRY.epw'
-    else:
-        idf.epw = './data/2050_Islington_a1b_90_percentile_TRY.epw'
+    zones = idf.idfobjects['ZONE']
+    for zone in zones:
+        item = idf.newidfobject('LIGHTS')
+        item.Name = '%s lights' % zone.Name
+        item.Zone_or_ZoneList_Name = zone.Name
+        item.Design_Level_Calculation_Method='Watts/Area'
+        item.Schedule_Name = 'AlwaysOn'
+        item.Watts_per_Zone_Floor_Area = job['light_wpm2']
 
 
 def set_infiltration(idf, job):
-    for zone in idf.idfobjects['ZONE']:
-        obj_name = '{} infiltration'.format(zone.Name)
-        obj = idf.newidfobject(
-            'ZONEINFILTRATION:DESIGNFLOWRATE',
-            Name = obj_name,
-            Zone_or_ZoneList_Name = zone.Name,
-            Design_Flow_Rate_Calculation_Method = "AirChanges/Hour",
-            Air_Changes_per_Hour = job['infiltration'],
-            Schedule_Name = "AlwaysOn")
+    zones = idf.idfobjects['ZONE']
+    for zone in zones:
+        item = idf.newidfobject('ZONEINFILTRATION:DESIGNFLOWRATE')
+        item.Name = '{} infiltration'.format(zone.Name)
+        item.Zone_or_ZoneList_Name = zone.Name
+        item.Design_Flow_Rate_Calculation_Method = "AirChanges/Hour"
+        item.Air_Changes_per_Hour = job['infiltration']
+        item.Schedule_Name = "AlwaysOn"
         
         
 def set_ventilation(idf, job):
-    for zone in idf.idfobjects['ZONE']:
-        obj_name = '{} ventilation'.format(zone.Name)
-        obj = idf.newidfobject(
-            'ZONEVENTILATION:DESIGNFLOWRATE',
-            Name = obj_name,
-            Zone_or_ZoneList_Name = zone.Name,
-            Design_Flow_Rate_Calculation_Method = "Flow/Person",
-            Flow_Rate_per_Person = job['ventilation'] / 1000, # l/s to m3/s
-            Schedule_Name = "AlwaysOn")
+    zones = idf.idfobjects['ZONE']
+    for zone in zones:
+        item = idf.newidfobject('ZONEVENTILATION:DESIGNFLOWRATE')
+        item.Name = '{} ventilation'.format(zone.Name)
+        item.Zone_or_ZoneList_Name = zone.Name
+        item.Design_Flow_Rate_Calculation_Method = "Flow/Person"
+        item.Flow_Rate_per_Person = job['ventilation'] / 1000 # l/s to m3/s
+        item.Schedule_Name = "AlwaysOn"
         
-        
+
+def set_natural_ventilation(idf, job):
+    pass
+
+
 def set_hvac(idf, job):
     kwargs = {'HVACTEMPLATE:PLANT:BOILER': 
               {'Efficiency': job['boiler_efficiency'],
@@ -307,18 +462,28 @@ def set_hvac(idf, job):
             ideal_loads(idf, zone.Name, **kwargs)
         else:
             boiler_only(idf, zone.Name, **kwargs)
-    heating_stat = idf.getobject('SCHEDULE:COMPACT', 'HeatingSetpointSchedule')
-    cooling_stat = idf.getobject('SCHEDULE:COMPACT', 'CoolingSetpointSchedule')
-    heating_stat.Field_4 = job['heating_setpoint']
-    cooling_stat.Field_4 = job['cooling_setpoint']
+    set_sizing_periods(idf, DDY)
     
 
+def set_sizing_periods(idf, DDY):
+    """Fetch SizingPeriod:DesignDay objects for the record.
+    """
+    idf2 = IDF(DDY)
+    
+    design_days = idf2.idfobjects['SIZINGPERIOD:DESIGNDAY']
+    heating_ddy = [ddy for ddy in design_days if 'Htg 99%' in ddy.Name][0]
+    idf.copyidfobject(heating_ddy)
+
+    cooling_ddy = [ddy for ddy in design_days if 'Clg 1%' in ddy.Name][0]
+    idf.copyidfobject(cooling_ddy)
+
+    
 def ideal_loads(idf, zone_name, **kwargs):
     add_or_replace_idfobject(idf,
         'HVACTEMPLATE:THERMOSTAT',
         Name='Thermostat',
-        Heating_Setpoint_Schedule_Name='HeatingSetpointSchedule',
-        Cooling_Setpoint_Schedule_Name='CoolingSetpointSchedule',
+        Heating_Setpoint_Schedule_Name='%s_Heat' % zone_name,
+        Cooling_Setpoint_Schedule_Name='%s_Cool' % zone_name,
         )
     add_or_replace_idfobject(idf,
         'HVACTEMPLATE:ZONE:IDEALLOADSAIRSYSTEM', '',
@@ -351,8 +516,8 @@ def boiler_only(idf, zone_name, **kwargs):
     add_or_replace_idfobject(idf,
         'HVACTEMPLATE:THERMOSTAT',
         Name='Thermostat',
-        Heating_Setpoint_Schedule_Name='HeatingSetpointSchedule',
-        Cooling_Setpoint_Schedule_Name='CoolingSetpointSchedule',
+        Heating_Setpoint_Schedule_Name='%s_Heat' % zone_name,
+        Cooling_Setpoint_Schedule_Name='%s_Cool' % zone_name,
         )
     add_or_replace_idfobject(idf,
         'HVACTEMPLATE:PLANT:HOTWATERLOOP',

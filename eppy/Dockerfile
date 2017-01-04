@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y \
   libfreetype6-dev \
   libpng-dev \
   git \
-  && pip install esoreader \
-  && pip install -U setuptools
+  && pip install -U setuptools \
+  && pip install \
+  python-dateutil \
+  sqlalchemy \
+  pandas
 # Currently we use geomeppy which allows us to build geometry and run models.
 RUN pip install geomeppy

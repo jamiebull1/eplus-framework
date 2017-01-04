@@ -24,19 +24,16 @@ import sys
 import tempfile
 import traceback
 
-from idfsyntax import prepare_idf
-
 sys.path.append(os.getcwd())
 
-from runner import RunnableIDF
 from src import results
-
+from src.idfsyntax import prepare_idf
+from src.runner import RunnableIDF
 
 AUTHKEY = 'password'
 
 logging.basicConfig(level=logging.INFO)
 #logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
-
 
 class EPlusJob(object):
     
@@ -44,8 +41,9 @@ class EPlusJob(object):
         """Template to run an EnergyPlus job.
         """
         job = json.loads(job)
-        self.job = job['job']['params']
         self.id = job['job']['id']
+        self.params = job['job']['params']
+        self.school = job['job']['school']
         logging.debug("Creating IDF")
         try:
             self.preprocess()
@@ -67,7 +65,7 @@ class EPlusJob(object):
         idf = RunnableIDF(
             './data/template.idf', None)
         # make the required changes
-        idf = prepare_idf(idf, self.job)
+        idf = prepare_idf(idf, self.params, self.school)
         self.idf = idf
 
     def run(self):
@@ -88,7 +86,7 @@ class EPlusJob(object):
         """Stub to process and set the results.
         """
         eplussql = os.path.join(self.rundir, 'eplusout.sql')
-        if self.job['daylighting'] > 0.5:
+        if self.params['daylighting'] > 0.5:
             idf = os.path.join(self.rundir, 'eplusout.expidf')
             err = os.path.join(self.rundir, 'eplusout.err')
             sql = os.path.join(self.rundir, 'eplusout.sql')
@@ -104,6 +102,7 @@ class EPlusJob(object):
                        'non-electrical': non_elec,
                        'time': execution_time,
                        }
+        
 
 
 class JobQueueManager(SyncManager):

@@ -16,6 +16,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import Queue
 from copy import deepcopy
 import json
 import logging
@@ -23,29 +24,29 @@ import time
 
 from SALib.analyze import morris as analyse_morris
 from SALib.analyze import sobol
-#from SALib.analyze.morris import compute_grouped_metric
-#from SALib.analyze.morris import compute_grouped_sigma
 from SALib.sample import morris as sample_morris
 from SALib.sample import saltelli
 from SALib.util import read_param_file
-
 import numpy as np
 
+
+#from SALib.analyze.morris import compute_grouped_metric
+#from SALib.analyze.morris import compute_grouped_sigma
 J_per_kWh = 3600000
 
 problem = read_param_file('/client/data/parameters.txt')
 #schools = 
 
 
-def sensitivity_analysis(job_q, result_q, sample_method, analysis_method, N):
-    """Conduct sensitivity analysis
+def sensitivity_analysis(
+        job_q, result_q, sample_method, analysis_method, N, *args, **kwargs):
+    """Conduct sensitivity analysis.
     """
-    names, runs, empty_results = samples(sample_method, N=N)
+    names, runs, empty_results = samples(sample_method, N=N, *args, **kwargs)
     jobs = enumerate(zip(names, (float(n) for n in run)) for run in runs)
     with open('/client/data/schools.json', 'r') as f:
         schools = json.load(f)
     school = schools.popitem()
-    print(school)
 
     logging.debug("Initialising empty results")
     elec_results = deepcopy(empty_results)
@@ -57,10 +58,9 @@ def sensitivity_analysis(job_q, result_q, sample_method, analysis_method, N):
     t0 = time.time()
     while np.isnan(elec_results).any():
         try:
-            job = make_job_json(*jobs.next())
-            job['school'] = school
+            job = make_job_json(*jobs.next(), school=school)
             job_q.put(job)
-        except:
+        except (Queue.Empty, StopIteration) as e:
             pass
         try:
             result = result_q.get_nowait()
@@ -71,12 +71,16 @@ def sensitivity_analysis(job_q, result_q, sample_method, analysis_method, N):
             if done > last_step + step:
                 last_step += step
                 update_log(t0, done)
-        except:
+        except (Queue.Empty, StopIteration) as e:
             pass
+    job_q.put('kill worker')
     logging.info("Analysing results")
-    analyse(runs, elec_results, 'elec.txt', method=analysis_method)
-    analyse(runs, nonelec_results, 'nonelec.txt', method=analysis_method)
-    analyse(runs, time_results, 'time.txt', method=analysis_method)
+    analyse(
+        runs, elec_results, 'elec.txt', method=analysis_method, *args, **kwargs)
+    analyse(
+        runs, nonelec_results, 'nonelec.txt', method=analysis_method, *args, **kwargs)
+    analyse(
+        runs, time_results, 'time.txt', method=analysis_method, *args, **kwargs)
 
 
 def update_log(t0, done):
@@ -89,8 +93,10 @@ def update_log(t0, done):
     logging.info("Approx %.1f mins remaining" % (secs_remaining / 60))
 
 
-def make_job_json(i, sample):
-    job = {'job': {'id': i, 'params': {key: value for key, value in sample}}}
+def make_job_json(i, sample, school):
+    job = {'job': {'id': i, 
+                   'school': school,
+                   'params': {key: value for key, value in sample}}}
     return json.dumps(job)
 
 
@@ -104,24 +110,30 @@ def samples(method='morris', N=1, *args, **kwargs):
     """
     if method == 'morris':
         runs = sample_morris.sample(problem, N, *args, **kwargs)
-    if method == 'saltelli':
-        runs = saltelli.sample(problem, N, *args, **kwargs)
+    elif method == 'saltelli':
+        second_order = kwargs['second_order']
+        logging.info("Calculate second order effects: %s" % second_order)
+        runs = saltelli.sample(problem, N, calc_second_order=second_order)
+    else:
+        logging.error("%s is not a valid sample method" % method)
+        raise TypeError("%s is not a valid sample method" % method)
     logging.info("Creating %i jobs" % len(runs))
     empty_results = np.nan * np.empty(len(runs))
 
     return problem['names'], runs, empty_results
 
 
-def analyse(X, Y, filename=None, method='morris', groups=None, 
-            calc_second_order=True):
+def analyse(X, Y, filename=None, method='morris', groups=None, *args, **kwargs):
     if method == 'morris':
         Si = analyse_morris.analyze(problem, X, Y)
     if method == 'sobol':
-        Si = sobol.analyze(problem, Y, calc_second_order=calc_second_order)
+        second_order = kwargs['second_order']
+        Si = sobol.analyze(problem, Y, calc_second_order=second_order)
     # write results
     if filename:
+        second_order = kwargs['second_order']
         write_results(filename, Si, problem, method=method, groups=groups, 
-                      calc_second_order=calc_second_order)
+                      calc_second_order=second_order)
 
 
 def write_results(filename, Si, problem, method, groups, calc_second_order):

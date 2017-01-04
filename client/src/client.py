@@ -15,6 +15,7 @@ from multiprocessing.managers import SyncManager
 import time
 
 from sensitivity import sensitivity_analysis
+from config import config
 
 
 logging.basicConfig(level=logging.INFO)
@@ -45,11 +46,18 @@ def main(server_ip):
     result_q = manager.get_result_q()
 
     logging.debug("Getting jobs")
-    # fill in details of the type of job to be run
+    # get details of the type of job to be run
+    sample_method = config.get('Sensitivity', 'sample_method')
+    analysis_method = config.get('Sensitivity', 'analysis_method')
+    N = config.getint('Sensitivity', 'N')
+    second_order = config.getboolean('Sensitivity', 'second_order')
     sensitivity_analysis(
         job_q, result_q, 
-        sample_method='saltelli', 
-        analysis_method='sobol', N=2)
+        sample_method=sample_method, 
+        analysis_method=analysis_method,
+        N=N,
+        second_order=second_order,
+        )
 
     logging.info("Done")
     # TODO: kill the queue and worker/s

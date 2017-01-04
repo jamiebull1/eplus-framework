@@ -78,4 +78,8 @@ class RunnableIDF(IDF):
         # run EnergyPlus
         run('in.idf', self.epw, **kwargs)
         # remove in.idf
+        #=======================================================================
+        # with open('in.idf', 'rb') as f:
+        #     logging.info(f.read())
+        #=======================================================================
         os.remove('in.idf')
