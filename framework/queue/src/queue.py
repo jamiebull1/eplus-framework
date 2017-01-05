@@ -79,8 +79,12 @@ class Queue(_Queue):
         return got
 
 
-if __name__ == "__main__":
+def main():
     logging.info("Starting job server")
     manager = make_server_manager(PORTNUM, AUTHKEY)
     server = manager.get_server()
     server.serve_forever()
+
+
+if __name__ == "__main__":
+    main()

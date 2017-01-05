@@ -24,4 +24,4 @@ RUN conda install -y \
     matplotlib
 
 # SALib from pip
-RUN pip install SALib==0.7.1
+RUN pip install SALib==1.0.1

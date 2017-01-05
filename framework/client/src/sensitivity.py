@@ -20,6 +20,7 @@ import Queue
 from copy import deepcopy
 import json
 import logging
+import os
 import time
 
 from SALib.analyze import morris as analyse_morris
@@ -27,24 +28,26 @@ from SALib.analyze import sobol
 from SALib.sample import morris as sample_morris
 from SALib.sample import saltelli
 from SALib.util import read_param_file
+
 import numpy as np
 
 
-#from SALib.analyze.morris import compute_grouped_metric
-#from SALib.analyze.morris import compute_grouped_sigma
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+
 J_per_kWh = 3600000
 
-problem = read_param_file('/client/data/parameters.txt')
-#schools = 
+param_file = os.path.join(THIS_DIR, os.pardir, 'data/parameters.txt')
+sites_file = os.path.join(THIS_DIR, os.pardir, 'data/schools.json')
+problem = read_param_file(param_file)
 
 
 def sensitivity_analysis(
-        job_q, result_q, sample_method, analysis_method, N, *args, **kwargs):
+        job_q, result_q, *args, **kwargs):
     """Conduct sensitivity analysis.
     """
-    names, runs, empty_results = samples(sample_method, N=N, *args, **kwargs)
+    names, runs, empty_results = samples(**kwargs)
     jobs = enumerate(zip(names, (float(n) for n in run)) for run in runs)
-    with open('/client/data/schools.json', 'r') as f:
+    with open(sites_file, 'r') as f:
         schools = json.load(f)
     school = schools.popitem()
 
@@ -76,11 +79,11 @@ def sensitivity_analysis(
     job_q.put('kill worker')
     logging.info("Analysing results")
     analyse(
-        runs, elec_results, 'elec.txt', method=analysis_method, *args, **kwargs)
+        runs, elec_results, 'elec.txt', method=analysis_method, **kwargs)
     analyse(
-        runs, nonelec_results, 'nonelec.txt', method=analysis_method, *args, **kwargs)
+        runs, nonelec_results, 'nonelec.txt', method=analysis_method, **kwargs)
     analyse(
-        runs, time_results, 'time.txt', method=analysis_method, *args, **kwargs)
+        runs, time_results, 'time.txt', method=analysis_method, **kwargs)
 
 
 def update_log(t0, done):
@@ -105,18 +108,20 @@ def evaluate_model(X):
     return X
 
 
-def samples(method='morris', N=1, *args, **kwargs):
+def samples(*args, **kwargs):
     """Sample parameter values and return a generator of jobs.
     """
-    if method == 'morris':
+    sample_method = kwargs['sample_method']
+    N = kwargs['N']
+    if sample_method == 'morris':
         runs = sample_morris.sample(problem, N, *args, **kwargs)
-    elif method == 'saltelli':
+    elif sample_method == 'saltelli':
         second_order = kwargs['second_order']
         logging.info("Calculate second order effects: %s" % second_order)
         runs = saltelli.sample(problem, N, calc_second_order=second_order)
     else:
-        logging.error("%s is not a valid sample method" % method)
-        raise TypeError("%s is not a valid sample method" % method)
+        logging.error("%s is not a valid sample method" % sample_method)
+        raise TypeError("%s is not a valid sample method" % sample_method)
     logging.info("Creating %i jobs" % len(runs))
     empty_results = np.nan * np.empty(len(runs))
 

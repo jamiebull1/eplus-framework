@@ -14,14 +14,15 @@ import logging
 from multiprocessing.managers import SyncManager
 import time
 
-from sensitivity import sensitivity_analysis
-from config import config
+from framework.client.src.sensitivity import sensitivity_analysis
+from framework.client.src.config import config
 
 
 logging.basicConfig(level=logging.INFO)
 #logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
 AUTHKEY = 'password'
+
 
 class JobQueueManager(SyncManager):
     pass
@@ -36,7 +37,14 @@ def make_creator_manager(server_ip, port, authkey):
     manager.connect()
     return manager
 
-
+def get_config():
+    options = {'sample_method': config.get('Sensitivity', 'sample_method'),
+               'analysis_method': config.get('Sensitivity', 'analysis_method'),
+               'N': config.getint('Sensitivity', 'N'),
+               'second_order': config.getboolean('Sensitivity', 'second_order'),
+               }
+    return options
+    
 def main(server_ip):
     logging.info("Making creator manager")
     manager = make_creator_manager(server_ip, 50000, AUTHKEY)
@@ -47,16 +55,15 @@ def main(server_ip):
 
     logging.debug("Getting jobs")
     # get details of the type of job to be run
-    sample_method = config.get('Sensitivity', 'sample_method')
-    analysis_method = config.get('Sensitivity', 'analysis_method')
-    N = config.getint('Sensitivity', 'N')
-    second_order = config.getboolean('Sensitivity', 'second_order')
+    options = get_config()
     sensitivity_analysis(
-        job_q, result_q, 
-        sample_method=sample_method, 
-        analysis_method=analysis_method,
-        N=N,
-        second_order=second_order,
+        job_q, result_q,
+        **options         #=======================================================================
+        # sample_method=sample_method, 
+        # analysis_method=analysis_method,
+        # N=N,
+        # second_order=second_order,
+        #=======================================================================
         )
 
     logging.info("Done")
