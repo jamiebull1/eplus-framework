@@ -14,17 +14,20 @@ from __future__ import unicode_literals
 from Queue import Empty
 import os
 import subprocess
+import sys
 
-from framework.client.src.client import get_config
-from framework.client.src.client import make_creator_manager
-from framework.client.src.sensitivity import samples
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.abspath(os.path.join(THIS_DIR, os.pardir)))
+
+from clientapp.src.client import get_config
+from clientapp.src.client import make_creator_manager
+from clientapp.src.sensitivity import samples
 
 
 SERVER_IP = 'queue'
 PORTNUM = 50000
 AUTHKEY = 'password'
 
-THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 QUEUE_SERVER = os.path.join(
     THIS_DIR, os.pardir, os.pardir, 'queue/src/queue.py')
 

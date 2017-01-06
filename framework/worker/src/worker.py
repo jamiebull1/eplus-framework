@@ -24,11 +24,13 @@ import sys
 import tempfile
 import traceback
 
-sys.path.append(os.getcwd())
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.abspath(os.path.join(THIS_DIR, os.pardir)))
 
 from src import results
 from src.idfsyntax import prepare_idf
 from src.runner import RunnableIDF
+
 
 AUTHKEY = 'password'
 

@@ -1,7 +1,7 @@
 FROM jamiebull1/scipystack:2.7
 
-ADD . /client
-WORKDIR /client
+ADD . /clientapp
+WORKDIR /clientapp
 
 # Start the client
 ENTRYPOINT [ "python", "src/client.py" ]

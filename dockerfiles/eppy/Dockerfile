@@ -16,5 +16,3 @@ RUN apt-get update && apt-get install -y \
   python-dateutil \
   sqlalchemy \
   pandas
-# Currently we use geomeppy which allows us to build geometry and run models.
-RUN pip install geomeppy

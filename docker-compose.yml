@@ -6,7 +6,7 @@ services:
       - 50000:50000
     cpu_shares: 5
   client:
-    build: ./framework/client
+    build: ./framework/clientapp
     links: 
       - queue
     volumes:
@@ -20,3 +20,4 @@ services:
     volumes:
       # host:container
       - ./results:/tmp/results
+    

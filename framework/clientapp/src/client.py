@@ -14,8 +14,14 @@ import logging
 from multiprocessing.managers import SyncManager
 import time
 
-from framework.client.src.sensitivity import sensitivity_analysis
-from framework.client.src.config import config
+import os
+import sys
+
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.abspath(os.path.join(THIS_DIR, os.pardir)))
+
+from src.sensitivity import sensitivity_analysis
+from src.config import config
 
 
 logging.basicConfig(level=logging.INFO)
