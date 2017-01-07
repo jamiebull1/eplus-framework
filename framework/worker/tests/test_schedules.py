@@ -28,9 +28,15 @@ sch2_str = "Schedule:Year, D1_Edu_DrySptHall_Cool, , D1_Edu_DrySptHall_Cool_Wk2,
 
 def test_combined_schedule():
     gifa = 1000
+    
+    class Zone:
+        def __init__(self, name):
+            self.Name = name
+            
+    zones = [Zone('zone 1'), Zone('zone 2')]
     schedule_types = ['Heat', 'Cool', 'Light', 'Equip', 'Occ']
     activities = activities_proportions(gifa)
-    schedules = make_schedules(schedule_types, activities)
+    schedules = make_schedules(zones, schedule_types, activities)
 
     return schedules
 
