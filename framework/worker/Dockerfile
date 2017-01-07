@@ -1,4 +1,4 @@
-FROM jamiebull1/eppy:eplus8.5_eppy_DEV
+FROM jamiebull1/geomeppy:latest
 
 ADD . /worker
 WORKDIR /worker
