@@ -1,0 +1,67 @@
+[{
+	"Teaching": {
+		"rate_code": "C2_Schools-Teaching",
+		"given_code": "Teaching",
+		"schedule_code": "D1_Edu-ClassRm"
+	}
+}, {
+	"Circulation": {
+		"rate_code": "C2_Schools-Circulation",
+		"given_code": "Circulation",
+		"schedule_code": "C2_Edu-Circulation"
+	}
+}, {
+	"CommunalArea": {
+		"rate_code": "C2_Schools-CommunalArea",
+		"given_code": "CommunalArea",
+		"schedule_code": "C2_Schools-CommunalArea"
+	}
+}, {
+	"Toilet": {
+		"rate_code": "C2_Schools-Toilet",
+		"given_code": "Toilet",
+		"schedule_code": "C2_Edu-Toilet"
+	}
+}, {
+	"FoodPrep": {
+		"rate_code": "C2_Schools-FoodPrep",
+		"given_code": "FoodPrep",
+		"schedule_code": "C2_Schools-FoodPrep"
+	}
+}, {
+	"EatDrink": {
+		"rate_code": "C2_Schools-EatDrink",
+		"given_code": "EatDrink",
+		"schedule_code": "C2_Schools-EatDrink"
+	}
+}, {
+	"DrySportsHall": {
+		"rate_code": "C2_Schools-DrySptHall",
+		"given_code": "DrySportsHall",
+		"schedule_code": "D1_Edu-DrySptHall"
+	}
+}, {
+	"Storage": {
+		"rate_code": "C2_Schools-Store",
+		"given_code": "Storage",
+		"schedule_code": "D1_Edu-Store"
+	}
+}, {
+	"Lecture": {
+		"rate_code": "C2_Schools-Lecture",
+		"given_code": "Lecture",
+		"schedule_code": "D1_Edu-Lecture"
+	}
+}, {
+	"Reception": {
+		"rate_code": "C2_Schools-Reception",
+		"given_code": "Reception",
+		"schedule_code": "D1_Edu-CellOff"
+	}
+}, {
+	"Office": {
+		"rate_code": "C2_Schools-Office",
+		"given_code": "Office",
+		"schedule_code": "D1_Edu-CellOff"
+	}
+}]
