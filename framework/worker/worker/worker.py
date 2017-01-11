@@ -3,10 +3,9 @@
 """
 worker.py
 ~~~~~~~~~
-
-EnergyPlus worker. This contains an EPlusJob object consisting of stubs to be
-filled out to preprocess, run, and postprocess a job fetched from the queue
-container, and return the results back to the queue container.
+EnergyPlus worker. This contains the basic code required to watch a folder for
+incoming jobs, then run them and place the results ready to be fetched by the
+client.
 
 """
 from __future__ import absolute_import
@@ -19,7 +18,7 @@ import os
 import tempfile
 import zipfile
 
-from runner import run
+from runner import run as eplus_run
 
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -27,14 +26,30 @@ JOBS_DIR = os.path.join(THIS_DIR, os.pardir, 'jobs')
 
 
 def get_jobs():
-    jobs = os.listdir(JOBS_DIR)
+    """
+    """
+    jobs = [os.path.join(JOBS_DIR, job)
+            for job in os.listdir(JOBS_DIR)]
     return jobs
 
 
-def unzip(archive, rundir):
-    archive = os.path.join(JOBS_DIR, archive)
-    with zipfile.ZipFile(archive, 'r') as zf:
-        zf.extractall(rundir)
+def unzip(src, dest=None, rm=False):
+    """Unzip a zipped file.
+    
+    Parameters
+    ----------
+    src : str
+        Path to the zip archive.
+    dest : str, optional {default: None}
+        The destination folder.
+    rm : bool
+        Flag indicating whether to delete the archive once unzipped.
+
+    """
+    with zipfile.ZipFile(src, 'r') as zf:
+        zf.extractall(dest)
+    if rm:
+        os.remove(src)
 
 
 def main():
@@ -44,10 +59,10 @@ def main():
         if jobs:
             logging.debug('found %i jobs' % len(jobs))
             unzip(jobs[0], run_dir)
+
             idf = os.path.join(run_dir, 'in.idf')
             epw = os.path.join(run_dir, 'in.epw')
-            output_dir = '.'
-            run(idf, epw, output_directory='../results')
+            eplus_run(idf, epw, output_directory='../results')
     
     
 if __name__ == "__main__":
