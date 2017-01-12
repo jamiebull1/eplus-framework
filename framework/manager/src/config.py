@@ -14,4 +14,4 @@ import os
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
 config = ConfigParser.SafeConfigParser()
-config.readfp(open(os.path.join(THIS_DIR, os.pardir, 'data/client.cfg')))
+config.readfp(open(os.path.join(THIS_DIR, os.pardir, 'config/client.cfg')))

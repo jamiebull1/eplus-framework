@@ -19,7 +19,7 @@ import sys
 
 from framework.manager.src.distribute import JOBQUEUE
 from framework.manager.src.distribute import enqueue_job
-from framework.manager.src.distribute import make_job
+from framework.manager.src.distribute import package_job
 from framework.manager.src.distribute import send_job
 from framework.manager.src.ssh_lib import sshCommandWait
 from manager.src.client import get_config
@@ -135,10 +135,10 @@ class TestDummyJob:
         res = sshCommandWait(self.remote_config, 'ls %s' % self.remotejobzip)
         assert self.remotejobzip + '\n' not in res[0]
         
-    def test_make_job(self):
+    def test_package_job(self):
         """Test creating a job. Fails if expected files are not in the tempdir.
         """
-        result = make_job()
+        result = package_job()
         assert os.path.isdir(result)
         expected = set(['dummy.csv', 'in.epw', 'in.idf'])
         result = set(os.listdir(result))
@@ -147,7 +147,7 @@ class TestDummyJob:
     def test_enqueue_job(self):
         """
         """
-        build_dir = make_job()
+        build_dir = package_job()
         enqueue_job(build_dir, self.testjob)
         assert os.path.isfile(self.testjobzip)
         assert not os.path.isdir(build_dir)
@@ -155,7 +155,7 @@ class TestDummyJob:
     def test_send_job(self):
         """
         """
-        build_dir = make_job()
+        build_dir = package_job()
         enqueue_job(build_dir, self.testjob)
         send_job(self.remote_config, self.testjobzip, self.remotejobzip)
         res = sshCommandWait(self.remote_config, 'ls %s' % self.remotejobzip)

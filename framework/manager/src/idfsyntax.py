@@ -10,24 +10,25 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import json
 import logging
 import os
+
+from six import StringIO
 
 from eppy.function_helpers import getcoords
 from eppy.iddcurrent import iddcurrent
 from geomeppy import IDF
 from geomeppy.polygons import Polygon
 from geomeppy.vectors import Vector3D  # used inside eval
-from six import StringIO
-
-from src.schedules import activities_proportions
-from src.schedules import make_rates
-from src.schedules import make_schedules
-from src.schedules import stretch
+from manager.src.schedules import activities_proportions
+from manager.src.schedules import make_rates
+from manager.src.schedules import make_schedules
+from manager.src.schedules import stretch
 
 
-#from worker.tests.test_schedules import activities_proportions
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+sites_file = os.path.join(THIS_DIR, os.pardir, 'data/schools.json')
 
 logging.basicConfig(level=logging.DEBUG)
 #logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
@@ -44,8 +45,22 @@ def init_idf():
     return idf
 
 
-def prepare_idf(idf, job, school):
+def get_school(name):
+    with open(sites_file, 'r') as f:
+        schools = json.load(f)
+    school = schools.get(name)
+    school['name'] = name
+
+    return school
+    
+
+def prepare_idf(job):
     logging.debug("Editing IDF")
+    
+    idf = init_idf()
+    schoolname = job.pop('geometry')
+    school = get_school(schoolname)
+
     for key, value in job.items():
         logging.debug("{}: {}".format(key, value))
     # geometry
@@ -92,9 +107,9 @@ def prepare_idf(idf, job, school):
 def set_geometry(idf, job, school):
     """Build the geometry for the IDF.
     """
-    name = school[0]
-    blocks = school[1]['blocks']
-    shading_blocks = school[1]['shading_blocks']
+    name = school['name']
+    blocks = school['blocks']
+    shading_blocks = school['shading_blocks']
     
     idf = build_school(idf, name, blocks, shading_blocks)
     return idf

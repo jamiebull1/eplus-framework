@@ -31,6 +31,7 @@ from SALib.util import read_param_file
 
 import numpy as np
 
+logging.basicConfig(level=logging.INFO)
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -109,10 +110,10 @@ def evaluate_model(X):
 
 
 def samples(*args, **kwargs):
-    """Sample parameter values and return a generator of jobs.
+    """Sample parameter values and return a list of job parameters.
     """
     sample_method = kwargs['sample_method']
-    N = kwargs['N']
+    N = int(kwargs['n'])
     if sample_method == 'morris':
         runs = sample_morris.sample(problem, N, *args, **kwargs)
     elif sample_method == 'saltelli':
@@ -123,9 +124,11 @@ def samples(*args, **kwargs):
         logging.error("%s is not a valid sample method" % sample_method)
         raise TypeError("%s is not a valid sample method" % sample_method)
     logging.info("Creating %i jobs" % len(runs))
-    empty_results = np.nan * np.empty(len(runs))
 
-    return problem['names'], runs, empty_results
+    samples = [{name: value for name, value in zip(problem['names'], run)}
+               for run in runs]
+
+    return samples
 
 
 def analyse(X, Y, filename=None, method='morris', groups=None, *args, **kwargs):
