@@ -1,7 +1,7 @@
 """
-dummy_job.py
-~~~~~~~~~~~~
-Create a dummy job for testing passing out jobs to remote servers.
+distribute.py
+~~~~~~~~~~~~~
+Package jobs into zip archives and send them to be processed.
 
 """
 from __future__ import absolute_import
@@ -15,7 +15,6 @@ import tempfile
 
 from eppy.modeleditor import IDF
 from framework.manager.src.ssh_lib import sftpSendFile
-from manager.src.ssh_lib import sshCommandWait
 
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -84,49 +83,4 @@ def send_job(remote_config, localpath, remotepath):
 
     """
     sftpSendFile(remote_config, localpath, remotepath)
-#    os.remove(localpath)
-    
-
-class TestDummyJob:
-
-    def setup(self):
-        self.testjob = os.path.join(JOBQUEUE, 'test')
-        self.testjobzip = os.path.join(JOBQUEUE, 'test.zip')
-        self.remote_config = {
-            "sshKeyFileName": 'C:/Users/Jamie/oco_key.pem',
-            "serverUserName": 'ec2-user',
-            "serverAddress": '52.210.46.10'}
-
-    def teardown(self):
-        try:
-            shutil.rmtree(self.testjob + '.zip')
-        except OSError:
-            pass
-        sshCommandWait(self.remote_config, 'rm job.zip')
-        res = sshCommandWait(self.remote_config, 'ls')
-        assert 'job.zip\n' not in res[0]
-        
-    def test_make_job(self):
-        """
-        """
-        result = make_job()
-        assert os.path.isdir(result)
-    
-    def test_enqueue_job(self):
-        """
-        """
-        build_dir = make_job()
-        enqueue_job(build_dir, self.testjob)
-        assert os.path.isfile(self.testjobzip)
-        assert not os.path.isdir(build_dir)
-    
-    def test_send_job(self):
-        """
-        """
-        build_dir = make_job()
-        enqueue_job(build_dir, self.testjob)
-        send_job(self.remote_config, self.testjobzip, 'job.zip')
-        res = sshCommandWait(self.remote_config, 'ls')
-        assert 'job.zip\n' in res[0]
-        
-    
+    os.remove(localpath)
