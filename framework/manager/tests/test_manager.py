@@ -13,15 +13,23 @@ from __future__ import unicode_literals
 
 from Queue import Empty
 import os
+import shutil
 import subprocess
 import sys
+
+from framework.manager.src.distribute import JOBQUEUE
+from framework.manager.src.distribute import enqueue_job
+from framework.manager.src.distribute import make_job
+from framework.manager.src.distribute import send_job
+from framework.manager.src.ssh_lib import sshCommandWait
+from manager.src.client import get_config
+from manager.src.client import make_creator_manager
+from manager.src.sensitivity import samples
+
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(THIS_DIR, os.pardir)))
 
-from manager.src.client import get_config
-from manager.src.client import make_creator_manager
-from manager.src.sensitivity import samples
 
 
 SERVER_IP = 'queue'
@@ -102,5 +110,55 @@ class TestQueues():
         for job in jobs:
             job_q.put(job)
         
+        
+class TestDummyJob:
+
+    def setup(self):
+        """Create common resources.
+        """
+        self.testjob = os.path.join(JOBQUEUE, 'test')
+        self.testjobzip = os.path.join(JOBQUEUE, 'test.zip')
+        self.remote_config = {
+            "sshKeyFileName": 'C:/Users/Jamie/oco_key.pem',
+            "serverUserName": 'ec2-user',
+            "serverAddress": '52.210.46.10'}
+        self.remotejobzip = 'eplus_worker/worker/jobs/job.zip'
+
+    def teardown(self):
+        """Tidy up residual files locally and remotely.
+        """
+        try:
+            shutil.rmtree(self.testjob + '.zip')
+        except OSError:
+            pass
+        sshCommandWait(self.remote_config, 'rm %s' % self.remotejobzip)
+        res = sshCommandWait(self.remote_config, 'ls %s' % self.remotejobzip)
+        assert self.remotejobzip + '\n' not in res[0]
+        
+    def test_make_job(self):
+        """Test creating a job. Fails if expected files are not in the tempdir.
+        """
+        result = make_job()
+        assert os.path.isdir(result)
+        expected = set(['dummy.csv', 'in.epw', 'in.idf'])
+        result = set(os.listdir(result))
+        assert result == expected
+    
+    def test_enqueue_job(self):
+        """
+        """
+        build_dir = make_job()
+        enqueue_job(build_dir, self.testjob)
+        assert os.path.isfile(self.testjobzip)
+        assert not os.path.isdir(build_dir)
+    
+    def test_send_job(self):
+        """
+        """
+        build_dir = make_job()
+        enqueue_job(build_dir, self.testjob)
+        send_job(self.remote_config, self.testjobzip, self.remotejobzip)
+        res = sshCommandWait(self.remote_config, 'ls %s' % self.remotejobzip)
+        assert self.remotejobzip + '\n' in res[0]
         
         
