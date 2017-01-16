@@ -13,7 +13,7 @@ import logging
 
 from manager.src.config import config
 from manager.src.idfsyntax import prepare_idf
-from manager.src.sensitivity import samples
+from manager.src import sensitivity
 
 
 logging.basicConfig(level=logging.INFO)
@@ -47,7 +47,7 @@ def sensitivity_analysis(*args, **kwargs):
     """Generate job specs for sensitivity analysis - Saltelli or Morris.
     """
     geometry = kwargs.pop('geometry')
-    specs = samples(**kwargs)
+    specs = sensitivity.samples(**kwargs)
     for job in specs:
         job.update({'geometry': geometry})
     return specs
