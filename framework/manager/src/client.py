@@ -35,6 +35,8 @@ def main():
         # this blocks until a resource becomes available
         distribute_job(job)
         sweep_results()
+    # TODO: Keep sweeping until all results are in
+    # TODO: Post-process the results
     
     logging.info("Done")
 

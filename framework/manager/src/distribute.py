@@ -48,9 +48,11 @@ def distribute_job(jobpath):
     jobdir = os.path.basename(jobpath)
     queuedir = os.path.join(JOBQUEUE, jobdir)
     enqueue_job(jobpath, queuedir)
+    # TODO: hash the enqueued job to get a unique id for the results database
     remotepath = 'eplus_worker/worker/jobs/%s.zip' % jobdir
     remote_config = find_server()
     send_job(remote_config, queuedir + '.zip', remotepath)
+    # TODO: store job configuration in the database
     logging.info('Job sent: %s ' % jobdir)
 
 
@@ -209,3 +211,4 @@ def sweep_results():
                 os.mkdir(local_results_dir)
                 sftpGetDirFiles(remote_config, results_dir, local_results_dir)
                 sshCommandNoWait(remote_config, 'rm -rf %s' % results_dir)
+                
