@@ -9,9 +9,15 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import logging
 import os
+import sys
+import time
+
 import paramiko as pm
-import sys, time
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 def establishSSHconnection(remote_config):
@@ -89,6 +95,20 @@ def sftpGetFile(remote_config, remoteFile, localFile):
         ssh.close()
 
 
+def sftpGetDirFiles(remote_config, remoteDir, localDir):
+    ssh = establishSSHconnection(remote_config)
+    ftp = ssh.open_sftp()
+    try:
+        files = ftp.listdir(remoteDir)
+        for f in files:
+            ftp.get('/'.join([remoteDir, f]), os.path.join(localDir, f))
+    except:
+        raise
+    finally:
+        ftp.close()
+        ssh.close()
+        
+
 def sftpGetDirs(remote_config, remoteDir, localDir):
     ssh = establishSSHconnection(remote_config)
     ftp = ssh.open_sftp()
@@ -99,6 +119,7 @@ def sftpGetDirs(remote_config, remoteDir, localDir):
             except IOError:
                 continue
             try:
+                print(os.path.abspath(os.path.join(localDir, item)))
                 os.mkdir(os.path.join(localDir, item))
             except OSError:
                 pass

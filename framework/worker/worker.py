@@ -91,7 +91,7 @@ def main():
             epw = os.path.join(run_dir, 'in.epw')
             eplus_run(idf, epw, output_directory=RESULTS_DIR)
             # postprocess anything that needs it
-            
+            # set self as ready
     
     
 if __name__ == "__main__":

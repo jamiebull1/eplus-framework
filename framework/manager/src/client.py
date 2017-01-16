@@ -12,12 +12,14 @@ from __future__ import unicode_literals
 
 import logging
 
-from framework.manager.src.jobgenerator import getjobs
 from framework.manager.src.distribute import distribute_job
+from framework.manager.src.distribute import sweep_results
+from framework.manager.src.jobgenerator import getjobs
+
 
 logging.basicConfig(level=logging.INFO)
 #logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
-
+   
 
 def main():
     """The main entry point for the program.
@@ -32,6 +34,7 @@ def main():
     for job in getjobs():
         # this blocks until a resource becomes available
         distribute_job(job)
+        sweep_results()
     
     logging.info("Done")
 

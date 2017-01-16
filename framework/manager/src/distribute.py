@@ -14,13 +14,16 @@ import os
 import platform
 import shutil
 import subprocess
-import tempfile
 import time
 
 from eppy.modeleditor import IDF
-from framework.manager.src.config import config
-from framework.manager.src.ssh_lib import sftpSendFile
+
+from manager.src.ssh_lib import sftpGetDirFiles
+from manager.src.ssh_lib import sshCommandNoWait
+from manager.src.ssh_lib import sshCommandWait
 from manager.src import ssh_lib
+from manager.src.config import config
+from manager.src.ssh_lib import sftpSendFile
 
 
 logging.basicConfig(level=logging.INFO)
@@ -30,37 +33,25 @@ DATA_DIR = os.path.join(THIS_DIR, os.pardir, 'data')
 IDF.setiddname(os.path.join(DATA_DIR, 'idd/Energy+.idd'))
 
 JOBQUEUE = os.path.join(THIS_DIR, os.pardir, os.pardir, 'queue', 'job_queue')
+RESULTS = os.path.join(THIS_DIR, os.pardir, os.pardir, 'queue', 'results_queue')
 
 
 def distribute_job(jobpath):
-    # TODO: add a name for the job
-    enqueue_job(jobpath, JOBQUEUE)
+    """Find a server on which to run an EnergyPlus simulation.
     
-    send_job()
+    Parameters
+    ----------
+    jobpath : str
+        Path to a folder containing everything needed to run the simulation.
 
-
-def package_job():
-    """Package an IDF and schedules file in a temporary directory.
-    
-    This is just as a dummy job for now for testing remote servers.
-    
-    Returns
-    -------
-    str
-        Path to the temp directory containing job resources.
-    
     """
-    idfpath = os.path.join(DATA_DIR, 'idfs/smallfile.idf')
-    csvpath = os.path.join(DATA_DIR, 'schedule_csv/dummy.csv')
-    epwpath = os.path.join(DATA_DIR, 'weather/islington/cntr_Islington_TRY.epw')
-    idf = IDF(idfpath)
-    idf.outputtype = 'nocomment2'
-    build_dir = tempfile.mkdtemp()
-    shutil.copy(csvpath, build_dir)
-    shutil.copy(epwpath, os.path.join(build_dir, 'in.epw'))
-    idf.saveas(os.path.join(build_dir, 'in.idf'))
-
-    return build_dir
+    jobdir = os.path.basename(jobpath)
+    queuedir = os.path.join(JOBQUEUE, jobdir)
+    enqueue_job(jobpath, queuedir)
+    remotepath = 'eplus_worker/worker/jobs/%s.zip' % jobdir
+    remote_config = find_server()
+    send_job(remote_config, queuedir + '.zip', remotepath)
+    logging.info('Job sent: %s ' % jobdir)
 
 
 def enqueue_job(src, dest):
@@ -74,6 +65,7 @@ def enqueue_job(src, dest):
         Queue directory to send the job to.
 
     """
+    logging.info('Queueing job %s to %s' % (src, dest))
     shutil.make_archive(dest, 'zip', src)
     shutil.rmtree(src)  # tidy up the temporary directory
 
@@ -91,17 +83,16 @@ def send_job(remote_config, localpath, remotepath):
         Path to send to on the remote server.
 
     """
+    logging.info('Sending job %s to %s' % (localpath, remotepath))
     sftpSendFile(remote_config, localpath, remotepath)
     os.remove(localpath)
 
 
-def find_server(remote_config, timeout_secs=3600):
+def find_server(timeout_secs=3600):
     """Find the first available server.
 
     Parameters
     ----------
-    remote_config : dict
-        Configurations details.
     timeout_mins : int, optional
         Time to allow for polling. This needs to be fairly high (default: 60)
         since simulations can take a long time to complete.
@@ -116,6 +107,10 @@ def find_server(remote_config, timeout_secs=3600):
     Exception : timeout error
 
     """
+    remote_config = {
+        "sshKeyFileName": config.get('Client', 'sshKeyFileName'),
+        "serverUserName": config.get('Client', 'serverUserName'),
+        "serverAddress": None}
     servers = config.get('Client', 'serverAddresses').split()
     logging.info(
         "There are currently {} servers configured".format(len(servers)))
@@ -136,12 +131,12 @@ def find_server(remote_config, timeout_secs=3600):
                 servers.remove(address)
                 logging.info("Acquired {}".format(address))
 
-                return address
+                return remote_config
 
         tour_count += 1
         time.sleep(polling_wait_secs)
 
-    return address
+    return remote_config
 
 
 def is_available(address, remote_config, timeout=None):
@@ -193,28 +188,24 @@ def ping(address, count=4):
         return False
 
 
-def test_ping():
-    result = ping('google.com', 1)
-    assert result
-
-
-def test_is_available():
-    address = '52.210.46.10'
-    remote_config = {
-        "sshKeyFileName": config.get('Client', 'sshKeyFileName'),
-        "serverUserName": config.get('Client', 'serverUserName'),
-        "serverAddress": address}
-    ssh_lib.sshCommandNoWait(remote_config, 'touch ready.txt')
-    assert is_available(address, remote_config)
-    print(ssh_lib.sshCommandNoWait(remote_config, 'rm ready.txt'))
-    assert not is_available(address, remote_config)
-
-
-def test_find_server():
+def sweep_results():
     remote_config = {
         "sshKeyFileName": config.get('Client', 'sshKeyFileName'),
         "serverUserName": config.get('Client', 'serverUserName'),
         "serverAddress": None}
-    expected = '52.210.46.10'
-    result = find_server(remote_config)
-    assert result == expected
+    servers = config.get('Client', 'serverAddresses').split()
+    remotepath = 'eplus_worker/worker/results'
+    for address in servers:
+        logging.info('Sweeping results from %s' % address)
+        remote_config['serverAddress'] = address
+        dirs = sshCommandWait(remote_config, 'ls %s' % remotepath)
+        for d in dirs[0]:
+            d = d.strip()
+            results_dir = '%s/%s' % (remotepath, d)
+            files = sshCommandWait(remote_config, 'ls %s/%s' % (remotepath, d))
+            if 'eplusout.end\n' in files[0]:
+                local_results_dir = os.path.join(RESULTS, d)
+                logging.info('Fetching %s' % results_dir)
+                os.mkdir(local_results_dir)
+                sftpGetDirFiles(remote_config, results_dir, local_results_dir)
+                sshCommandNoWait(remote_config, 'rm -rf %s' % results_dir)

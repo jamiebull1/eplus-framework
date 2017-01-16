@@ -13,11 +13,11 @@ from __future__ import unicode_literals
 import json
 import logging
 import os
-
-from six import StringIO
+import shutil
+import tempfile
 
 from eppy.function_helpers import getcoords
-from eppy.iddcurrent import iddcurrent
+
 from geomeppy import IDF
 from geomeppy.polygons import Polygon
 from geomeppy.vectors import Vector3D  # used inside eval
@@ -27,21 +27,26 @@ from manager.src.schedules import make_schedules
 from manager.src.schedules import stretch
 
 
+logging.basicConfig(level=logging.DEBUG)
+
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 sites_file = os.path.join(THIS_DIR, os.pardir, 'data/schools.json')
 
-logging.basicConfig(level=logging.DEBUG)
 #logging.basicConfig(filename='../var/log/eplus.log', level=logging.DEBUG)
 
-DDY = './data/weather/islington/cntr_Islington_TRY.ddy'
+DDY = os.path.join(
+    THIS_DIR, os.pardir, 'data/weather/islington/cntr_Islington_TRY.ddy')
+IDD = os.path.join(THIS_DIR, os.pardir, 'data/idd/Energy+.idd')
+GEOMETRY_CACHE = os.path.join(THIS_DIR, os.pardir, 'data/cached')
+
 
 def init_idf():
     """Initialise an IDF.
     """
-    iddfhandle = StringIO(iddcurrent.iddtxt)
     if IDF.getiddname() == None:
-        IDF.setiddname(iddfhandle)
+        IDF.setiddname(IDD)
     idf = IDF()
+    idf.initnew(None)
     return idf
 
 
@@ -52,19 +57,53 @@ def get_school(name):
     school['name'] = name
 
     return school
-    
+
 
 def prepare_idf(job):
     logging.debug("Editing IDF")
-    
+    build_dir = tempfile.mkdtemp()
+    os.chdir(build_dir)
     idf = init_idf()
     schoolname = job.pop('geometry')
     school = get_school(schoolname)
-
+    idf.newidfobject('BUILDING', schoolname)
+    idf.newidfobject('GLOBALGEOMETRYRULES',
+        Starting_Vertex_Position = 'UpperLeftCorner',
+        Vertex_Entry_Direction = 'CounterClockwise',
+        Coordinate_System = 'World',
+        )
+    idf.newidfobject('RUNPERIOD',
+        Begin_Day_of_Month = '1',
+        Begin_Month = '1',
+        End_Day_of_Month = '10',
+        End_Month = '1',
+        #=======================================================================
+        # End_Day_of_Month = '31',
+        # End_Month = '12',
+        #=======================================================================
+        )
+    idf.newidfobject('SCHEDULE:CONSTANT',
+        Name = 'AlwaysOn',
+        Schedule_Type_Limits_Name = 'On/Off',
+        Hourly_Value = 1)    
+    idf.newidfobject('SCHEDULETYPELIMITS',
+        Name = 'On/Off',
+        Lower_Limit_Value = 0,
+        Upper_Limit_Value = 1,
+        Numeric_Type = 'DISCRETE',
+        Unit_Type = 'Availability',
+        )
+    # simulation control
+    idf.newidfobject('SIMULATIONCONTROL',
+        Do_Zone_Sizing_Calculation = 'Yes',
+        )
+    
     for key, value in job.items():
         logging.debug("{}: {}".format(key, value))
     # geometry
-    idf = set_geometry(idf, job, school)
+    idf = set_geometry(idf, job, school)  # stash the geometry file
+    # building
+    
     # weather file
     set_weather(idf, job)
     # equipment
@@ -89,29 +128,29 @@ def prepare_idf(job):
     # daylighting
     set_daylighting(idf, job)
 
-    # fabric U values (add dummy constructions)
-    set_u_value(idf, 'ExternalWallMaterialInner', job['wall_u_value'])
-    set_u_value(idf, 'ExternalFloorMaterialInner', job['floor_u_value'])
-    set_u_value(idf, 'ExternalRoofMaterialInner', job['roof_u_value'])
-
-    set_density(idf, 'ExternalWallMaterialInner', job['density'])
-    set_density(idf, 'ExternalFloorMaterialInner', job['density'])
-    set_density(idf, 'ExternalRoofMaterialInner', job['density'])
-
-    return idf
-    # set wall thermal mass
-    # set floor thermal mass
-    # set roof thermal mass
+    # fabric U values
+    set_materials(idf, job)
+    
+    idf.saveas('./in.idf')
+    shutil.copy(idf.epw, './in.epw')
+    os.chdir(THIS_DIR)
+    
+    return build_dir
 
 
 def set_geometry(idf, job, school):
-    """Build the geometry for the IDF.
+    """Build the geometry for the IDF, or collect it from the cache.
     """
     name = school['name']
-    blocks = school['blocks']
-    shading_blocks = school['shading_blocks']
-    
-    idf = build_school(idf, name, blocks, shading_blocks)
+    cached_idf = os.path.join(GEOMETRY_CACHE, name) + '.idf'
+    try:
+        idf = IDF(cached_idf)
+    except IOError:        
+        blocks = school['blocks']
+        shading_blocks = school['shading_blocks']
+        
+        idf = build_school(idf, name, blocks, shading_blocks)
+        idf.saveas(cached_idf)
     return idf
 
 
@@ -148,6 +187,7 @@ def build_school(idf, schoolname, blocks, shading_blocks):
 #    logging.debug('setting wwr')
 #    idf.set_wwr(0.3)
     logging.debug('setting constructions')
+    idf.set_default_constructions()
     for surface in idf.getsurfaces():
         set_construction(surface)
     for surface in idf.idfobjects['FENESTRATIONSURFACE:DETAILED']:
@@ -159,6 +199,7 @@ def build_school(idf, schoolname, blocks, shading_blocks):
 
 
 def set_construction(surface):
+    
     if surface.Surface_Type.lower() == 'wall':
         if surface.Outside_Boundary_Condition.lower() == 'outdoors':
             surface.Construction_Name = 'Project Wall'
@@ -168,15 +209,43 @@ def set_construction(surface):
             surface.Construction_Name = 'Project Partition'
     if surface.Surface_Type.lower() == 'floor':
         if surface.Outside_Boundary_Condition.lower() == 'ground':
-            surface.Construction_Name = 'Project Ground Floor'
+            surface.Construction_Name = 'Project Floor'
         else:
-            surface.Construction_Name = 'Project Ground Floor'
+            surface.Construction_Name = 'Project Floor'
     if surface.Surface_Type.lower() == 'roof':
         surface.Construction_Name = 'Project Flat Roof'
     if surface.Surface_Type.lower() == 'ceiling':
         surface.Construction_Name = 'Project Ceiling'
     if surface.Surface_Type.lower() == 'window':
         surface.Construction_Name = 'Project External Window'
+
+
+def set_materials(idf, job):
+    project_wall = idf.getobject('CONSTRUCTION', 'Project Wall')
+    project_wall.Outside_Layer = 'ExternalWallMaterialInner'
+    project_floor = idf.getobject('CONSTRUCTION', 'Project Floor')
+    project_floor.Outside_Layer = 'ExternalFloorMaterialInner'
+    project_roof = idf.getobject('CONSTRUCTION', 'Project Flat Roof')
+    project_roof.Outside_Layer = 'ExternalRoofMaterialInner'
+
+    base_material = idf.getobject('MATERIAL', 'DefaultMaterial')
+    wall_material = idf.copyidfobject(base_material)
+    wall_material.Name = 'ExternalWallMaterialInner'
+    floor_material = idf.copyidfobject(base_material)
+    floor_material.Name = 'ExternalFloorMaterialInner'
+    roof_material = idf.copyidfobject(base_material)
+    roof_material.Name = 'ExternalRoofMaterialInner'
+    
+    set_u_value(idf, 'ExternalWallMaterialInner', job['wall_u_value'])
+    set_u_value(idf, 'ExternalFloorMaterialInner', job['floor_u_value'])
+    set_u_value(idf, 'ExternalRoofMaterialInner', job['roof_u_value'])
+    
+    set_density(idf, 'ExternalWallMaterialInner', job['density'])
+    set_density(idf, 'ExternalFloorMaterialInner', job['density'])
+    set_density(idf, 'ExternalRoofMaterialInner', job['density'])
+    # set wall thermal mass
+    # set floor thermal mass
+    # set roof thermal mass
 
 
 def set_weather(idf, job):
@@ -191,9 +260,13 @@ def set_weather(idf, job):
 
     """
     if job['weather_file'] < 0.5:
-        idf.epw = './data/weather/islington/cntr_Islington_TRY.epw'
+        idf.epw = os.path.join(
+            THIS_DIR, os.pardir,
+            'data/weather/islington/cntr_Islington_TRY.epw')
     else:
-        idf.epw = './data/weather/islington/2050_Islington_a1b_90_percentile_TRY.epw'
+        idf.epw = os.path.join(
+            THIS_DIR, os.pardir, 
+            'data/weather/islington/2050_Islington_a1b_90_percentile_TRY.epw')
 
 
 def set_occupancy(idf, job):
@@ -368,8 +441,8 @@ def set_windows(idf, job):
     layer.Name = 'ExternalWindowMaterial'
     layer.UFactor = u_value
     layer.Solar_Heat_Gain_Coefficient = shgc
-    construction = add_or_replace_idfobject(idf, 'CONSTRUCTION')
-    construction.Name = 'Project External Window'
+    construction = add_or_replace_idfobject(
+        idf, 'CONSTRUCTION', 'Project External Window')
     construction.Outside_Layer = layer.Name
     # set window:wall ratio
     idf.set_wwr(wwr)
@@ -381,17 +454,23 @@ def set_windows(idf, job):
 def set_convection_algorithms(idf, job):
     interior = ['Simple', 'TARP', 'AdapativeConvectionAlgorithm']
     interior_algo = interior[int(round(job['interior_surface_convection']))]
-    inside = idf.idfobjects['SURFACECONVECTIONALGORITHM:INSIDE'][0]
+    inside = getorset_idfobject(idf, 'SURFACECONVECTIONALGORITHM:INSIDE')
     inside.Algorithm = interior_algo
     exterior = ['SimpleCombined', 'DOE-2', 'TARP', 'AdapativeConvectionAlgorithm']
     exterior_algo = exterior[int(round(job['exterior_surface_convection']))]
-    outside = idf.idfobjects['SURFACECONVECTIONALGORITHM:OUTSIDE'][0]
+    outside = getorset_idfobject(idf, 'SURFACECONVECTIONALGORITHM:OUTSIDE')
     outside.Algorithm = exterior_algo
 
+def getorset_idfobject(idf, key):
+    try:
+        obj = idf.idfobjects[key][0]
+    except IndexError:
+        obj = idf.newidfobject(key)
+    return obj
 
 def set_timestep(idf, job):
     steps = [4, 6, 12]
-    timestep = idf.idfobjects['TIMESTEP'][0]
+    timestep = getorset_idfobject(idf, 'TIMESTEP')
     timestep.Number_of_Timesteps_per_Hour = steps[int(round(job['timesteps_per_hour']))]
 
 
