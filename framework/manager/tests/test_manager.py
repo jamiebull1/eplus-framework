@@ -27,10 +27,6 @@ from framework.manager.src.ssh_lib import sshCommandNoWait
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.abspath(os.path.join(THIS_DIR, os.pardir)))
 
-SERVER_IP = 'queue'
-PORTNUM = 50000
-AUTHKEY = 'password'
-
 QUEUE_SERVER = os.path.join(
     THIS_DIR, os.pardir, os.pardir, 'queue/src/queue.py')
 
@@ -75,7 +71,7 @@ def test_ping():
 
 
 def test_is_available():
-    address = '52.210.46.10'
+    address = '52.214.221.169'
     remote_config = {
         "sshKeyFileName": config.get('Client', 'sshKeyFileName'),
         "serverUserName": config.get('Client', 'serverUserName'),
