@@ -66,44 +66,12 @@ def prepare_idf(job):
     idf = init_idf()
     schoolname = job.pop('geometry')
     school = get_school(schoolname)
-    idf.newidfobject('BUILDING', schoolname)
-    idf.newidfobject('GLOBALGEOMETRYRULES',
-        Starting_Vertex_Position = 'UpperLeftCorner',
-        Vertex_Entry_Direction = 'CounterClockwise',
-        Coordinate_System = 'World',
-        )
-    idf.newidfobject('RUNPERIOD',
-        Begin_Day_of_Month = '1',
-        Begin_Month = '1',
-        End_Day_of_Month = '10',
-        End_Month = '1',
-        #=======================================================================
-        # End_Day_of_Month = '31',
-        # End_Month = '12',
-        #=======================================================================
-        )
-    idf.newidfobject('SCHEDULE:CONSTANT',
-        Name = 'AlwaysOn',
-        Schedule_Type_Limits_Name = 'On/Off',
-        Hourly_Value = 1)    
-    idf.newidfobject('SCHEDULETYPELIMITS',
-        Name = 'On/Off',
-        Lower_Limit_Value = 0,
-        Upper_Limit_Value = 1,
-        Numeric_Type = 'DISCRETE',
-        Unit_Type = 'Availability',
-        )
-    # simulation control
-    idf.newidfobject('SIMULATIONCONTROL',
-        Do_Zone_Sizing_Calculation = 'Yes',
-        )
+    set_required_objects(idf, schoolname)
     
     for key, value in job.items():
         logging.debug("{}: {}".format(key, value))
     # geometry
     idf = set_geometry(idf, job, school)  # stash the geometry file
-    # building
-    
     # weather file
     set_weather(idf, job)
     # equipment
@@ -136,6 +104,57 @@ def prepare_idf(job):
     os.chdir(THIS_DIR)
     
     return build_dir
+
+
+def set_required_objects(idf, schoolname):
+    idf.newidfobject('BUILDING', schoolname)
+    idf.newidfobject('GLOBALGEOMETRYRULES', 
+        Starting_Vertex_Position='UpperLeftCorner', 
+        Vertex_Entry_Direction='CounterClockwise', 
+        Coordinate_System='World')
+    idf.newidfobject('RUNPERIOD', 
+        Begin_Day_of_Month='1', 
+        Begin_Month='1', 
+        # End_Day_of_Month = '31',
+        # End_Month = '12',
+        End_Day_of_Month='10', 
+        End_Month='1')
+    idf.newidfobject('SCHEDULE:CONSTANT', 
+        Name='AlwaysOn', 
+        Schedule_Type_Limits_Name='On/Off', 
+        Hourly_Value=1)
+    idf.newidfobject('SCHEDULETYPELIMITS', 
+        Name='On/Off', 
+        Lower_Limit_Value=0, 
+        Upper_Limit_Value=1, 
+        Numeric_Type='DISCRETE', 
+        Unit_Type='Availability')
+    # simulation control
+    idf.newidfobject('SIMULATIONCONTROL', Do_Zone_Sizing_Calculation='Yes')
+
+
+def set_meters(idf):
+    annual_output_meter(idf, 'Gas:Facility')
+    annual_output_meter(idf, 'Electricity:Facility')
+
+
+def annual_output_meter(idf, meter):
+    """Add an annual output meter.
+    
+    Parameters
+    ----------
+    idf : eppy.modeleditor.IDF3
+        The IDF to be edited.
+    meter : str
+        Name of the meter to add.
+        
+    """
+    add_or_replace_idfobject(idf,
+        'OUTPUT:METER',
+        '',
+        Name=meter,
+        Reporting_Frequency='Annual'
+        )
 
 
 def set_geometry(idf, job, school):
