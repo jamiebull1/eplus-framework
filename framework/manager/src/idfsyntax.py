@@ -40,38 +40,21 @@ IDD = os.path.join(THIS_DIR, os.pardir, 'data/idd/Energy+.idd')
 GEOMETRY_CACHE = os.path.join(THIS_DIR, os.pardir, 'data/cached')
 
 
-def init_idf():
-    """Initialise an IDF.
-    """
-    if IDF.getiddname() == None:
-        IDF.setiddname(IDD)
-    idf = IDF()
-    idf.initnew(None)
-    return idf
-
-
-def get_school(name):
-    with open(sites_file, 'r') as f:
-        schools = json.load(f)
-    school = schools.get(name)
-    school['name'] = name
-
-    return school
-
-
 def prepare_idf(job):
     logging.debug("Editing IDF")
+    for key, value in job.items():
+        logging.debug("{}: {}".format(key, value))
     build_dir = tempfile.mkdtemp()
     os.chdir(build_dir)
     idf = init_idf()
     schoolname = job.pop('geometry')
     school = get_school(schoolname)
-    set_required_objects(idf, schoolname)
-    
-    for key, value in job.items():
-        logging.debug("{}: {}".format(key, value))
     # geometry
     idf = set_geometry(idf, job, school)  # stash the geometry file
+    # basics
+    set_required_objects(idf, schoolname)
+    # meters
+    set_meters(idf)
     # weather file
     set_weather(idf, job)
     # equipment
@@ -95,7 +78,6 @@ def prepare_idf(job):
     set_timestep(idf, job)
     # daylighting
     set_daylighting(idf, job)
-
     # fabric U values
     set_materials(idf, job)
     
@@ -104,6 +86,25 @@ def prepare_idf(job):
     os.chdir(THIS_DIR)
     
     return build_dir
+
+
+def init_idf():
+    """Initialise an IDF.
+    """
+    if IDF.getiddname() == None:
+        IDF.setiddname(IDD)
+    idf = IDF()
+    idf.initnew(None)
+    return idf
+
+
+def get_school(name):
+    with open(sites_file, 'r') as f:
+        schools = json.load(f)
+    school = schools.get(name)
+    school['name'] = name
+
+    return school
 
 
 def set_required_objects(idf, schoolname):
@@ -124,11 +125,22 @@ def set_required_objects(idf, schoolname):
         Schedule_Type_Limits_Name='On/Off', 
         Hourly_Value=1)
     idf.newidfobject('SCHEDULETYPELIMITS', 
+        Name='AnyNumber') 
+    idf.newidfobject('SCHEDULETYPELIMITS', 
         Name='On/Off', 
         Lower_Limit_Value=0, 
         Upper_Limit_Value=1, 
-        Numeric_Type='DISCRETE', 
-        Unit_Type='Availability')
+        Numeric_Type='DISCRETE')
+    idf.newidfobject('SCHEDULETYPELIMITS', 
+        Name='Fraction', 
+        Lower_Limit_Value=0, 
+        Upper_Limit_Value=1, 
+        Numeric_Type='CONTTINUOUS')
+    idf.newidfobject('SCHEDULETYPELIMITS', 
+        Name='ControlType', 
+        Lower_Limit_Value=0, 
+        Upper_Limit_Value=4, 
+        Numeric_Type='DISCRETE')
     # simulation control
     idf.newidfobject('SIMULATIONCONTROL', Do_Zone_Sizing_Calculation='Yes')
 
@@ -136,6 +148,8 @@ def set_required_objects(idf, schoolname):
 def set_meters(idf):
     annual_output_meter(idf, 'Gas:Facility')
     annual_output_meter(idf, 'Electricity:Facility')
+    annual_output_meter(idf, 'DistrictHeating:Facility')
+    annual_output_meter(idf, 'DistrictCooling:Facility')
 
 
 def annual_output_meter(idf, meter):
