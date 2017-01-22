@@ -27,11 +27,12 @@ import os
 import platform
 
 from dateutil.rrule import rrule, DAILY
-from geomeppy import IDF
 from six import StringIO
 import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 
+from geomeppy import IDF
+from manager.src.config import config
 import numpy as np
 import pandas as pd
 
@@ -395,11 +396,10 @@ class ScheduleBuilder(object):
     versions.
     
     """
-    # TODO: DB: Move NCM DB configuration into config file?
     if platform.system() == 'Windows':
-        SERVER = 'mssql+pyodbc://localhost\\SQLEXPRESS'
-        DB_NAME = 'NCM'
-        DRIVER = 'SQL Server Native Client 10.0'
+        SERVER = config.get('ScheduleDB', 'server')
+        DB_NAME = config.get('ScheduleDB', 'db_name')
+        DRIVER = config.get('ScheduleDB', 'driver')
         conn_string = "{SERVER}/{DB_NAME}?driver={DRIVER}".format(**locals())
         tablepattern = '[{self.DB_NAME}].[dbo].[{table}]'
     else:

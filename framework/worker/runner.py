@@ -14,6 +14,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import distutils.spawn
 import os
 import platform
 from subprocess import CalledProcessError
@@ -21,10 +22,24 @@ from subprocess import check_call
 import tempfile
 
 
+def find_version():
+    """Get the installed EnergyPlus version number.
+    """
+    energyplus = distutils.spawn.find_executable('EnergyPlus')
+    if not energyplus:
+        raise AttributeError
+    energyplus = os.path.realpath(energyplus) # follow links in /usr/bin
+    folder = os.path.dirname(energyplus)
+    version = os.path.basename(folder)[-5:]
+    assert version[1] == '-' and version[3] == '-'
+
+    return version
+
+
 try:
-    VERSION = os.environ["ENERGYPLUS_INSTALL_VERSION"]  # used in CI files
+    VERSION = os.environ["ENERGYPLUS_INSTALL_VERSION"]  # used in CI file)
 except KeyError:
-    VERSION = '8-5-0'  # TODO: Get this from IDD, IDF/IMF, config file?
+    VERSION = find_version()
 
 if platform.system() == 'Windows':
     EPLUS_HOME = "C:/EnergyPlusV{VERSION}".format(**locals())
@@ -146,3 +161,9 @@ def run(idf=None, weather=None, output_directory='', annual=False,
         # potentially catch contents of std out and put it in the error
         raise
     return 'OK'
+
+
+def test_find_version():
+    result = find_version()
+    expected = '8-5-0'
+    assert result == expected

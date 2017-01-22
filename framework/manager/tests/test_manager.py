@@ -15,13 +15,13 @@ from Queue import Empty
 import os
 import sys
 
-from framework.manager.src.config import config
-from framework.manager.src.distribute import find_server
-from framework.manager.src.distribute import is_available
-from framework.manager.src.distribute import ping
-from framework.manager.src.distribute import sweep_results
-from framework.manager.src.sensitivity import samples
-from framework.manager.src.ssh_lib import sshCommandNoWait
+from manager.src.distribute import find_server
+from manager.src.distribute import is_available
+from manager.src.distribute import ping
+from manager.src.distribute import sweep_results
+from manager.src.sensitivity import samples
+from manager.src.config import config
+from manager.src.ssh_lib import sshCommandNoWait
 
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -46,7 +46,7 @@ def test_samples_smoketest():
     job_type = config.get('Client', 'job_type')
     options = config.items(job_type)
     options = {item[0]: item[1] for item in options}  # make into a dict
-    assert isinstance(samples(**options), tuple)
+    assert isinstance(samples(**options), list)
 
 
 def clear_queue(q):

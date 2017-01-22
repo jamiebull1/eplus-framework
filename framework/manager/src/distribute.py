@@ -48,11 +48,9 @@ def distribute_job(jobpath):
     jobdir = os.path.basename(jobpath)
     queuedir = os.path.join(JOBQUEUE, jobdir)
     enqueue_job(jobpath, queuedir)
-    # TODO: hash the enqueued job to get a unique id for the results database
     remotepath = 'eplus_worker/worker/jobs/%s.zip' % jobdir
     remote_config = find_server()
     send_job(remote_config, queuedir + '.zip', remotepath)
-    # TODO: store job configuration in the database
     logging.info('Job sent: %s ' % jobdir)
 
 
@@ -134,7 +132,7 @@ def find_server(timeout_secs=3600):
                 logging.info("Acquired {}".format(address))
 
                 return remote_config
-
+        sweep_results()  # we need to try and clear any space
         tour_count += 1
         time.sleep(polling_wait_secs)
 
@@ -191,24 +189,39 @@ def ping(address, count=4):
 
 
 def sweep_results():
+    """Fetch completed jobs from servers and report number of running jobs.
+    
+    Returns
+    -------
+    int
+        Number of jobs currently running.
+
+    """
     remote_config = {
         "sshKeyFileName": config.get('Client', 'sshKeyFileName'),
         "serverUserName": config.get('Client', 'serverUserName'),
         "serverAddress": None}
     servers = config.get('Client', 'serverAddresses').split()
-    remotepath = 'eplus_worker/worker/results'
+    jobspath = 'eplus_worker/worker/jobs'
+    resultspath = 'eplus_worker/worker/results'
+    num_running_jobs = 0
     for address in servers:
         logging.info('Sweeping results from %s' % address)
         remote_config['serverAddress'] = address
-        dirs = sshCommandWait(remote_config, 'ls %s' % remotepath)
+        waiting_jobs = sshCommandWait(remote_config, 'ls %s' % jobspath)
+        num_running_jobs += len(waiting_jobs[0])
+        dirs = sshCommandWait(remote_config, 'ls %s' % resultspath)
+        num_running_jobs += len(dirs[0])
         for d in dirs[0]:
             d = d.strip()
-            results_dir = '%s/%s' % (remotepath, d)
-            files = sshCommandWait(remote_config, 'ls %s/%s' % (remotepath, d))
+            results_dir = '%s/%s' % (resultspath, d)
+            files = sshCommandWait(remote_config, 'ls %s/%s' % (resultspath, d))
             if 'eplusout.end\n' in files[0]:
                 local_results_dir = os.path.join(RESULTS, d)
                 logging.info('Fetching %s' % results_dir)
                 os.mkdir(local_results_dir)
                 sftpGetDirFiles(remote_config, results_dir, local_results_dir)
                 sshCommandNoWait(remote_config, 'rm -rf %s' % results_dir)
-                
+                num_running_jobs -= 1
+            logging.info('Current running jobs: %i' % num_running_jobs)
+    return num_running_jobs

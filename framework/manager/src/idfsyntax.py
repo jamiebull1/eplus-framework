@@ -14,7 +14,6 @@ import json
 import logging
 import os
 import shutil
-import tempfile
 
 from eppy.function_helpers import getcoords
 
@@ -44,7 +43,11 @@ def prepare_idf(job):
     logging.debug("Editing IDF")
     for key, value in job.items():
         logging.debug("{}: {}".format(key, value))
-    build_dir = tempfile.mkdtemp()
+    build_dir = os.path.join(THIS_DIR, 'staging', job.pop('unique_id'))
+    try:
+        os.mkdir(build_dir)
+    except OSError:
+        assert os.path.isdir(build_dir)
     os.chdir(build_dir)
     idf = init_idf()
     schoolname = job.pop('geometry')
@@ -54,7 +57,7 @@ def prepare_idf(job):
     # basics
     set_required_objects(idf, schoolname)
     # meters
-    set_meters(idf)
+    set_outputs(idf)
     # weather file
     set_weather(idf, job)
     # equipment
@@ -115,7 +118,7 @@ def set_required_objects(idf, schoolname):
         Coordinate_System='World')
     idf.newidfobject('RUNPERIOD', 
         Begin_Day_of_Month='1', 
-        Begin_Month='1', 
+        Begin_Month='1',
         # End_Day_of_Month = '31',
         # End_Month = '12',
         End_Day_of_Month='10', 
@@ -135,7 +138,7 @@ def set_required_objects(idf, schoolname):
         Name='Fraction', 
         Lower_Limit_Value=0, 
         Upper_Limit_Value=1, 
-        Numeric_Type='CONTTINUOUS')
+        Numeric_Type='CONTINUOUS')
     idf.newidfobject('SCHEDULETYPELIMITS', 
         Name='ControlType', 
         Lower_Limit_Value=0, 
@@ -145,11 +148,13 @@ def set_required_objects(idf, schoolname):
     idf.newidfobject('SIMULATIONCONTROL', Do_Zone_Sizing_Calculation='Yes')
 
 
-def set_meters(idf):
+def set_outputs(idf):
     annual_output_meter(idf, 'Gas:Facility')
     annual_output_meter(idf, 'Electricity:Facility')
     annual_output_meter(idf, 'DistrictHeating:Facility')
     annual_output_meter(idf, 'DistrictCooling:Facility')
+    annual_output_variable(idf, 'Facility Heating Setpoint Not Met While Occupied Time')
+    annual_output_variable(idf, 'Facility Cooling Setpoint Not Met While Occupied Time')
 
 
 def annual_output_meter(idf, meter):
@@ -157,7 +162,7 @@ def annual_output_meter(idf, meter):
     
     Parameters
     ----------
-    idf : eppy.modeleditor.IDF3
+    idf : IDF object
         The IDF to be edited.
     meter : str
         Name of the meter to add.
@@ -170,6 +175,23 @@ def annual_output_meter(idf, meter):
         Reporting_Frequency='Annual'
         )
 
+def annual_output_variable(idf, variable):
+    """Add an annual output variable.
+    
+    Parameters
+    ----------
+    idf : IDF object
+        The IDF to be edited.
+    meter : str
+        Name of the variable to add.
+        
+    """
+    add_or_replace_idfobject(idf,
+        'OUTPUT:VARIABLE',
+        '',
+        Variable_Name=variable,
+        Reporting_Frequency='Annual'
+        )
 
 def set_geometry(idf, job, school):
     """Build the geometry for the IDF, or collect it from the cache.

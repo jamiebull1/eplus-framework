@@ -13,17 +13,18 @@
 'ventilation' 5 16 params
 'infiltration' 0.2 1 params
 'boiler_efficiency' 0.7 0.9 params
+'schedules' -0.2 0.2 params
+'density' 500 1000 params
+# 'cooling_efficiency' 1 3.5 params
+
 'weather_file' 0 1 hyperparams
 'interior_surface_convection' 0 2 hyperparams
 'exterior_surface_convection' 0 3 hyperparams
 'timesteps_per_hour' 0 2 hyperparams
 'detailed_hvac' 0 1 hyperparams
 'daylighting' 0 1 hyperparams
-'schedules' -0.2 0.2 params
-'density' 500 1000 params
 'natural_ventilation' 0 1 hyperparams
 # 'shading_blocks_distance' 0 100 hyperparams
 # 'polygon_smoothing' 0.1 1 hyperparams
 # 'detailed_glazing' 0 1 hyperparams
-# 'cooling_efficiency' 1 3.5 params
 # 'power_density_averaging' 0 1 hyperparams

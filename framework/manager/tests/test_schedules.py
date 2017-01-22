@@ -12,14 +12,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from geomeppy.utilities import almostequal
-
+from manager.src.schedules import Schedule
+from manager.src.schedules import activities_proportions
+from manager.src.schedules import all_zone_rates
+from manager.src.schedules import all_zone_schedules
+from manager.src.schedules import area_weight_schedules
+from manager.src.schedules import make_schedules
 import pandas as pd
-from worker.src.schedules import Schedule
-from worker.src.schedules import activities_proportions
-from worker.src.schedules import all_zone_schedules
-from worker.src.schedules import all_zone_rates
-from worker.src.schedules import area_weight_schedules
-from worker.src.schedules import make_schedules
 
 
 sch1_str = "Schedule:Year, C2_Edu_Circulation_Cool, , C2_Edu_Circulation_Cool_WK1, 1,1, 12,22, C2_Edu_Circulation_Cool_Wk2, 12,23, 1,9, C2_Edu_Circulation_Cool_WK1, 1,10, 2,13, C2_Edu_Circulation_Cool_Wk2, 2,14, 2,20, C2_Edu_Circulation_Cool_WK1, 2,21, 3,20, C2_Edu_Circulation_Cool_Wk2, 3,21, 4,3, C2_Edu_Circulation_Cool_WK1, 4,4, 5,29, C2_Edu_Circulation_Cool_Wk2, 5,30, 6,5, C2_Edu_Circulation_Cool_WK1, 6,6, 7,24, C2_Edu_Circulation_Cool_Wk2, 7,25, 9,4, C2_Edu_Circulation_Cool_Wk2, 9,5, 10,30, C2_Edu_Circulation_Cool_Wk2, 10,31, 12,31, C2_Edu_Circulation_Cool_WK1, 1,1, 10,23;Schedule:Week:Daily, C2_Edu_Circulation_Cool_Wk2, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Hol;Schedule:Week:Daily, C2_Edu_Circulation_Cool_WK1, C2_Edu_Circulation_Cool_Wknd, C2_Edu_Circulation_Cool_Wkdy, C2_Edu_Circulation_Cool_Wkdy, C2_Edu_Circulation_Cool_Wkdy, C2_Edu_Circulation_Cool_Wkdy, C2_Edu_Circulation_Cool_Wkdy, C2_Edu_Circulation_Cool_Wknd, C2_Edu_Circulation_Cool_Hol, C2_Edu_Circulation_Cool_Wkdy, C2_Edu_Circulation_Cool_Wkdy, C2_Edu_Circulation_Cool_Wkdy, C2_Edu_Circulation_Cool_Wkdy;Schedule:Day:List, C2_Edu_Circulation_Cool_Hol, Cool, yes, 60, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100;Schedule:Day:List, C2_Edu_Circulation_Cool_Wkdy, Cool, yes, 60, 100, 100, 100, 100, 100, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 100, 100, 100, 100, 100;Schedule:Day:List, C2_Edu_Circulation_Cool_Wknd, Cool, yes, 60, 100, 100, 100, 100, 100, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 100, 100, 100, 100, 100;"
